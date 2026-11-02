@@ -21,7 +21,7 @@ export function useStageScroll(ref: RefObject<HTMLElement | null>) {
         start: 'top top',
         end: 'bottom bottom',
         // a little smoothing on touch screens turns stepped finger-scrolling into one continuous motion
-        scrub: window.matchMedia('(pointer: coarse)').matches ? 0.5 : true,
+        scrub: window.matchMedia('(pointer: coarse)').matches ? 0.35 : true,
         onUpdate: (self) => {
           const p = self.progress
           stage.progress = p

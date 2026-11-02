@@ -33,13 +33,13 @@ function Pacer({ active }: { active: boolean }) {
 export default function HeroCanvas({ onReady, active = true }: { onReady: () => void; active?: boolean }) {
   const small = isSmallScreen()
   const reduced = prefersReducedMotion()
-  if (small && stage.interval === 0) stage.interval = 33
 
   return (
     <Canvas
-      dpr={small ? [1, 1.25] : [1, 1.75]}
+      // sharp first: phones render at their real density (capped at 2); the governor only lowers it if frames run slow, never below 1
+      dpr={small ? [1.5, 2] : [1, 1.75]}
       camera={{ position: [0, 0, small ? 11 : 8.5], fov: 38 }}
-      gl={{ antialias: !small, powerPreference: 'high-performance', alpha: true }}
+      gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}
       frameloop={reduced ? 'demand' : 'never'}
       // the phone's address bar resizes the viewport while scrolling: never re-create the drawing buffer for that
       resize={{ scroll: false, debounce: { scroll: 50, resize: 250 } }}

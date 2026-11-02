@@ -80,7 +80,7 @@ export function HeroLayer({ layer, variant = 'script' }: { layer: 'back' | 'fron
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 flex items-end px-5 pb-8 md:px-10 md:pb-10 ${front ? 'z-20' : 'z-0'}`}
+      className={`pointer-events-none absolute inset-0 flex items-end px-5 pb-8 pt-24 md:px-10 md:pb-10 md:pt-28 ${front ? 'z-20' : 'z-0'}`}
       aria-hidden={!front}
     >
       <section data-hero-fade className={variant === 'ideas' ? 'max-w-[64rem]' : 'max-w-[46rem]'}>
@@ -98,7 +98,7 @@ export function HeroLayer({ layer, variant = 'script' }: { layer: 'back' | 'fron
           </h1>
         ) : (
           <h1
-          className="display text-[clamp(3.2rem,11.5vw,10.5rem)]"
+          className="display text-[clamp(2.4rem,min(11.5vw,calc((100svh-17.5rem)/2.9)),10.5rem)]"
           {...(front ? { 'aria-label': 'We don’t follow the script.' } : {})}
         >
           <span className={`block overflow-hidden pb-[0.04em] ${hide(!front)}`}>
@@ -112,7 +112,7 @@ export function HeroLayer({ layer, variant = 'script' }: { layer: 'back' | 'fron
           </span>
           </h1>
         )}
-        <p {...(front ? { 'data-hero-sub': '' } : {})} className={`mt-6 max-w-md text-base leading-relaxed text-bone/80 md:text-lg ${hide(front)}`}>
+        <p {...(front ? { 'data-hero-sub': '' } : {})} className={`mt-6 max-w-md text-base leading-relaxed text-bone/80 md:text-lg [@media(max-height:520px)]:hidden ${hide(front)}`}>
           Nous créons des expériences digitales{' '}
           <span className="serif-accent text-xl md:text-2xl">qui ne ressemblent à aucune autre.</span>
         </p>

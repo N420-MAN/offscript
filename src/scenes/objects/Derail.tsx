@@ -273,7 +273,10 @@ export default function Derail({ small, reduced }: SceneProps) {
     }))
   }, [railCount])
 
+  const coarse = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches, [])
   useEffect(() => {
+    // On touch screens the finger drags the page: it must not also steer the camera and the cursor light (that read as shaking).
+    if (coarse) return
     const move = (e: PointerEvent) => {
       mouse.current.tx = (e.clientX / window.innerWidth) * 2 - 1
       mouse.current.ty = -((e.clientY / window.innerHeight) * 2 - 1)
@@ -295,7 +298,7 @@ export default function Derail({ small, reduced }: SceneProps) {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerdown', down)
     }
-  }, [reduced])
+  }, [reduced, coarse])
 
   useEffect(() => {
     const rm = rails.current
@@ -319,8 +322,7 @@ export default function Derail({ small, reduced }: SceneProps) {
         if (++gv.n === 60) {
           const avg = gv.t / 60
           const dpr = state.viewport.dpr
-          if (avg > 0.023 && dpr > 1) state.setDpr(Math.max(1, dpr - 0.25))
-          else if (avg > 0.04 && dpr > 0.6) state.setDpr(Math.max(0.6, dpr - 0.2))
+          if (avg > 0.023 && dpr > (small ? 1.75 : 1)) state.setDpr(Math.max(small ? 1.75 : 1, dpr - 0.25))
           else if (avg > 0.075 && stage.interval < 66) stage.interval = 66
           else if (avg > 0.04 && stage.interval < 33) stage.interval = 33
           gv.t = gv.n = 0
@@ -336,10 +338,11 @@ export default function Derail({ small, reduced }: SceneProps) {
 
     g.visible = reveal > 0.001
     if (!reduced) {
-      look.current.x = THREE.MathUtils.damp(look.current.x, state.pointer.x, 3, dt)
-      look.current.y = THREE.MathUtils.damp(look.current.y, state.pointer.y, 3, dt)
+      look.current.x = THREE.MathUtils.damp(look.current.x, coarse ? 0 : state.pointer.x, 3, dt)
+      look.current.y = THREE.MathUtils.damp(look.current.y, coarse ? 0 : state.pointer.y, 3, dt)
     }
-    const shake = reduced ? 0 : burst * 0.05 * (Math.sin(t * 41) + Math.sin(t * 67))
+    // a low, slow tremor (the old high-frequency one aliased into visible jitter at lower frame rates)
+    const shake = reduced || coarse ? 0 : burst * 0.035 * (Math.sin(t * 11) + Math.sin(t * 17))
     const travel = smoothstep(0, 1, p) * TRAVEL
     g.position.set(-look.current.x * 0.8 + shake, -look.current.y * 0.5 + shake * 0.6, travel - (1 - reveal) * 34)
     g.rotation.set(look.current.y * 0.04, -look.current.x * 0.07, c * 0.28 + p * 0.25 + shake * 0.5)

@@ -600,7 +600,7 @@ export default function FloatingWindows() {
           // self-rotation: a slowly drifting rest angle followed by a damped spring; squares up when held or hovered
           b.base += b.drift * dt * (1 - b.calm)
           const rest = Math.round(b.base / 360) * 360 + b.home * 0.3
-          const target = (b.base + Math.sin(t * 0.2 + i * 2.1) * 6) * (1 - b.calm) + rest * b.calm
+          const target = (b.home + Math.sin(b.ph + t * (0.05 + Math.abs(b.drift) * 0.012)) * 26 + Math.sin(t * 0.2 + i * 2.1) * 6) * (1 - b.calm) + rest * b.calm
           b.spin += (target - b.angle) * 6 * dt
           b.spin *= sd
           b.angle += b.spin * dt
@@ -788,7 +788,7 @@ export default function FloatingWindows() {
       <div
         ref={hint}
         style={{ zIndex: 3000 }}
-        className="pointer-events-none absolute bottom-3 left-4 max-w-[13rem] rounded-xl border border-bone/20 bg-void/70 p-3 backdrop-blur-md md:bottom-auto md:left-auto md:right-10 md:top-[5.4rem] md:max-w-[19rem] md:p-4"
+        className="pointer-events-none absolute bottom-11 left-4 max-w-[13rem] rounded-xl border border-bone/20 bg-void/70 p-3 backdrop-blur-md md:bottom-auto md:left-auto md:right-10 md:top-[5.4rem] md:max-w-[19rem] md:p-4"
       >
         <p className="label text-[0.7rem] text-signal">{DEMOS.length} démos à explorer</p>
         <p className="mt-1.5 text-[0.8rem] leading-snug text-bone/85 md:text-sm">
@@ -798,7 +798,7 @@ export default function FloatingWindows() {
       <p
         ref={cue}
         aria-hidden="true"
-        className="label pointer-events-none absolute inset-x-0 bottom-5 text-center text-[0.72rem] text-bone/80 transition-opacity duration-500"
+        className="label pointer-events-none absolute inset-x-0 bottom-3 text-center md:bottom-5 text-[0.72rem] text-bone/80 transition-opacity duration-500"
         style={{ opacity: 0, zIndex: 3000 }}
       >
         <span className="inline-block animate-bounce">↓</span> Continuez à défiler
