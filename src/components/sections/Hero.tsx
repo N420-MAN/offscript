@@ -32,7 +32,7 @@ export function SiteHeader() {
     <>
       <header
         data-hero-header
-        className={`pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-5 py-5 transition-[background,backdrop-filter] duration-500 md:px-10 md:py-8 ${solid ? 'bg-void/70 backdrop-blur-md' : ''}`}
+        className={`pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between px-5 py-5 transition-[background,backdrop-filter] duration-500 md:px-10 md:py-8 ${solid ? 'bg-void/90' : ''}`}
       >
         <a href="#/" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0 }) }} className="pointer-events-auto font-display text-2xl font-extrabold tracking-[-0.04em] md:text-[2rem]" aria-label="OFFSCRIPT — accueil">
           OFF<span className="text-signal">/</span>SCRIPT

@@ -498,10 +498,13 @@ export default function FloatingWindows() {
     // ---- simulation + render
     let raf = 0
     let last = performance.now()
+    let smoothDt = 1 / 60
     const tick = () => {
       raf = requestAnimationFrame(tick)
       const now = performance.now()
-      const dt = Math.min((now - last) / 1000, 0.04)
+      // frame times are smoothed so an uneven frame never turns into a velocity jump (the cause of visible shivering)
+      smoothDt += (Math.min((now - last) / 1000, 0.04) - smoothDt) * 0.2
+      const dt = smoothDt
       last = now
       if (!stage.active) return
       const p = stage.progress
@@ -593,7 +596,7 @@ export default function FloatingWindows() {
             const { hw: ew, hh: eh } = ext(b)
             const ox2 = Math.min(b.x + ew - textRect.x, textRect.x + textRect.width - (b.x - ew))
             const oy2 = Math.min(b.y + eh - textRect.y, textRect.y + textRect.height - (b.y - eh))
-            if (ox2 > 0 && oy2 > 0 && b.x < textRect.x + textRect.width) b.vx += Math.min(1, ox2 / 160) * 560 * dt
+            if (ox2 > 14 && oy2 > 0 && b.x < textRect.x + textRect.width) b.vx += Math.min(1, (ox2 - 14) / 200) * 360 * dt
           }
           b.x += b.vx * dt
           b.y += b.vy * dt

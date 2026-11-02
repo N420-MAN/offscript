@@ -24,15 +24,18 @@ const GLYPHS = '01{}[]<>/\;:=+-*#$%&|!?()_~^abcdefghijklmnopqrstuvwxyzXYZ'.padEn
 
 function glyphAtlas(): THREE.CanvasTexture {
   const c = document.createElement('canvas')
-  c.width = c.height = 512
+  c.width = c.height = 1024
   const g = c.getContext('2d')!
   g.fillStyle = '#fff'
-  g.font = '700 46px "DM Mono", ui-monospace, monospace'
+  g.font = '700 92px "DM Mono", ui-monospace, monospace'
   g.textAlign = 'center'
   g.textBaseline = 'middle'
-  for (let i = 0; i < 64; i++) g.fillText(GLYPHS[i], (i % 8) * 64 + 32, Math.floor(i / 8) * 64 + 34)
+  for (let i = 0; i < 64; i++) g.fillText(GLYPHS[i], (i % 8) * 128 + 64, Math.floor(i / 8) * 128 + 68)
   const t = new THREE.CanvasTexture(c)
   t.colorSpace = THREE.SRGBColorSpace
+  t.anisotropy = 8
+  t.generateMipmaps = true
+  t.minFilter = THREE.LinearMipmapLinearFilter
   return t
 }
 
@@ -178,7 +181,7 @@ const tmpCol = new THREE.Color()
 
 export default function Derail({ small, reduced }: SceneProps) {
   const world = useRef<THREE.Group>(null)
-  const gov = useRef({ skip: 150, t: 0, n: 0 })
+  const gov = useRef({ skip: 150, t: 0, n: 0, good: 0, raised: false, locked: false })
   const { gl, scene, camera } = useThree()
   // Compile every shader and upload every texture now, while the intro is still typing, so the first visible
   // frame of the scene (the moment the page tears open) does not stall.
@@ -216,7 +219,7 @@ export default function Derail({ small, reduced }: SceneProps) {
       Array.from({ length: SCREEN_VARIANTS }, (_, v) => {
         const t = new THREE.CanvasTexture(drawScreen(v, v + 3, hot))
         t.colorSpace = THREE.SRGBColorSpace
-        t.anisotropy = 4
+        t.anisotropy = 8
         return t
       })
     return { cool: make(false), hot: make(true) }
@@ -313,18 +316,32 @@ export default function Derail({ small, reduced }: SceneProps) {
     const g = world.current
     if (!g) return
     const dt = Math.min(rawDelta, 0.05)
-    // Quality governor: if frames stay slow, shed resolution (never below 1x) instead of dropping frames.
+    // Quality governor: starts at full sharpness. Only a sustained slow stretch lowers the resolution (never below the floor);
+    // a sustained fast stretch gives it back. It pauses while the frame rate is capped on purpose, and stops raising for good
+    // if lowering was ever needed after a raise, so it never oscillates.
     const gv = gov.current
-    if (!reduced && rawDelta < 0.5) {
+    if (!reduced && rawDelta < 0.5 && stage.progress < 0.78 && stage.interval === 0) {
       if (gv.skip > 0) gv.skip--
       else {
         gv.t += rawDelta
-        if (++gv.n === 60) {
-          const avg = gv.t / 60
+        if (++gv.n === 90) {
+          const avg = gv.t / 90
           const dpr = state.viewport.dpr
-          if (avg > 0.023 && dpr > (small ? 1.75 : 1)) state.setDpr(Math.max(small ? 1.75 : 1, dpr - 0.25))
-          else if (avg > 0.075 && stage.interval < 66) stage.interval = 66
-          else if (avg > 0.04 && stage.interval < 33) stage.interval = 33
+          const floor = small ? 1.75 : 1.25
+          const top = Math.max(floor, Math.min(window.devicePixelRatio || 1, 2))
+          if (avg > 0.03 && dpr > floor) {
+            state.setDpr(Math.max(floor, dpr - 0.25))
+            if (gv.raised) gv.locked = true
+            gv.good = 0
+          } else if (avg > 0.075 && stage.interval < 66) stage.interval = 66
+          else if (avg > 0.045 && stage.interval < 33) stage.interval = 33
+          else if (avg < 0.019 && dpr < top && !gv.locked) {
+            if (++gv.good >= 3) {
+              state.setDpr(Math.min(top, dpr + 0.25))
+              gv.raised = true
+              gv.good = 0
+            }
+          } else gv.good = 0
           gv.t = gv.n = 0
         }
       }

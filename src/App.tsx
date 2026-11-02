@@ -86,6 +86,7 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
               </Suspense>
             </div>
           )}
+          <div data-seam aria-hidden="true" style={{ opacity: 0 }} className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-40 bg-gradient-to-b from-transparent to-void" />
           <div
               data-hero-fade
               className="pointer-events-none absolute inset-0 z-0"

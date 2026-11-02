@@ -15,13 +15,14 @@ export function useStageScroll(ref: RefObject<HTMLElement | null>) {
     () => {
       const hero = gsap.utils.toArray<HTMLElement>('[data-hero-fade]')
       const statement = gsap.utils.toArray<HTMLElement>('[data-statement]')
+      const seam = gsap.utils.toArray<HTMLElement>('[data-seam]')
 
       ScrollTrigger.create({
         trigger: ref.current,
         start: 'top top',
         end: 'bottom bottom',
-        // a little smoothing on touch screens turns stepped finger-scrolling into one continuous motion
-        scrub: window.matchMedia('(pointer: coarse)').matches ? 0.35 : true,
+        // time-based smoothing turns stepped wheel / finger scrolling into one continuous motion
+        scrub: window.matchMedia('(pointer: coarse)').matches ? 0.4 : 0.6,
         onUpdate: (self) => {
           const p = self.progress
           stage.progress = p
@@ -31,6 +32,8 @@ export function useStageScroll(ref: RefObject<HTMLElement | null>) {
 
           const stIn = smoothstep(0.5, 0.68, p)
           gsap.set(statement, { autoAlpha: stIn, y: (1 - stIn) * 40 })
+
+          gsap.set(seam, { opacity: smoothstep(0.9, 1, p) })
 
           stage.invalidate()
         },

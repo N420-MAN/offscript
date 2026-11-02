@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { isSmallScreen, prefersReducedMotion } from '../../hooks/useCapabilities'
 import { stage } from '../../state/stage'
 import Derail from '../objects/Derail'
@@ -20,13 +20,43 @@ function Pacer({ active }: { active: boolean }) {
     const tick = (t: number) => {
       raf = requestAnimationFrame(tick)
       if (!on.current || document.hidden) return
-      if (t - last < stage.interval - 2) return
+      // once the journey reaches the floating windows the scene is a slow backdrop: 30 fps is plenty and frees the GPU for them
+      const gap = stage.progress > 0.8 ? Math.max(stage.interval, 33) : stage.interval
+      if (t - last < gap - 2) return
       last = t
       advance(t / 1000)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [advance])
+  return null
+}
+
+/** `?debug` shows live frame rate, render resolution and cap, so a slow device can be diagnosed from one screenshot. */
+function Hud() {
+  const gl = useThree((s) => s.gl)
+  const frames = useRef(0)
+  useFrame(() => {
+    frames.current++
+  })
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;font:12px/1.4 monospace;color:#9f9;background:rgba(0,0,0,.75);padding:6px 8px;border-radius:6px;pointer-events:none;white-space:pre'
+    document.body.appendChild(el)
+    let last = performance.now()
+    const id = window.setInterval(() => {
+      const now = performance.now()
+      const fps = (frames.current * 1000) / (now - last)
+      frames.current = 0
+      last = now
+      const c = gl.domElement
+      el.textContent = `3D fps ${fps.toFixed(0)}  cap ${stage.interval || 'none'}ms\nrender dpr ${gl.getPixelRatio().toFixed(2)} (screen ${window.devicePixelRatio})\ncanvas ${c.width}x${c.height}  p=${stage.progress.toFixed(2)}`
+    }, 500)
+    return () => {
+      window.clearInterval(id)
+      el.remove()
+    }
+  }, [gl])
   return null
 }
 
@@ -37,7 +67,7 @@ export default function HeroCanvas({ onReady, active = true }: { onReady: () => 
   return (
     <Canvas
       // sharp first: phones render at their real density (capped at 2); the governor only lowers it if frames run slow, never below 1
-      dpr={small ? [1.5, 2] : [1, 1.75]}
+      dpr={small ? [1.75, 2] : [1.25, 2]}
       camera={{ position: [0, 0, small ? 11 : 8.5], fov: 38 }}
       gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}
       frameloop={reduced ? 'demand' : 'never'}
@@ -52,6 +82,7 @@ export default function HeroCanvas({ onReady, active = true }: { onReady: () => 
       }}
     >
       {!reduced && <Pacer active={active} />}
+      {typeof location !== 'undefined' && /[?&]debug/.test(location.search) && <Hud />}
       <Derail small={small} reduced={reduced} />
     </Canvas>
   )
