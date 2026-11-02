@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Update with the confirmed production domain:
+Sitemap: https://offscript.ma/sitemap.xml
