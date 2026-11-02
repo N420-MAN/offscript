@@ -15,12 +15,13 @@ function rng(seed: number) {
   }
 }
 
-export function drawScreen(variant: number, seed: number, hot = false): HTMLCanvasElement {
+export function drawScreen(variant: number, seed: number, hot = false, sc = 1): HTMLCanvasElement {
   const r = rng(seed)
   const c = document.createElement('canvas')
-  c.width = W
-  c.height = H
+  c.width = W * sc
+  c.height = H * sc
   const g = c.getContext('2d')!
+  g.scale(sc, sc)
   const rect = (x: number, y: number, w: number, h: number, fill: string | CanvasGradient, rad = 4) => {
     g.fillStyle = fill
     g.beginPath()

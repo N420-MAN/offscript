@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { isSmallScreen, prefersReducedMotion } from '../../hooks/useCapabilities'
+import { prefersReducedMotion, useLowPower } from '../../hooks/useCapabilities'
 import { stage } from '../../state/stage'
 import Derail from '../objects/Derail'
 
@@ -61,13 +61,14 @@ function Hud() {
 }
 
 export default function HeroCanvas({ onReady, active = true }: { onReady: () => void; active?: boolean }) {
-  const small = isSmallScreen()
+  const small = useLowPower()
   const reduced = prefersReducedMotion()
 
   return (
     <Canvas
+      key={small ? 'low' : 'full'} // crossing the phone breakpoint rebuilds the scene with the right settings
       // sharp first: phones render at their real density (capped at 2); the governor only lowers it if frames run slow, never below 1
-      dpr={small ? [1.75, 2] : [1.25, 2]}
+      dpr={small ? [1.75, 2] : [1.5, 2]}
       camera={{ position: [0, 0, small ? 11 : 8.5], fov: 38 }}
       gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}
       frameloop={reduced ? 'demand' : 'never'}

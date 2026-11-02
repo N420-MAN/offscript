@@ -68,7 +68,9 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
   }, [active])
 
   return (
-    <main data-intro={intro} className="bg-void">
+    <>
+    <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-bone focus:px-4 focus:py-2 focus:text-void">Aller au contenu</a>
+    <main id="contenu" tabIndex={-1} data-intro={intro} className="bg-void outline-none">
       {/* The stage is 3.2 screens tall; its sticky child holds the whole journey. */}
       <div ref={stageRef} data-stage className="relative" style={{ height: '320vh' }}>
         {/* Anchor for the "Projets" link: the frame where the work floats. */}
@@ -86,6 +88,7 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
               </Suspense>
             </div>
           )}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(8,9,11,0) 52%, rgba(8,9,11,0.5) 100%)' }} />
           <div data-seam aria-hidden="true" style={{ opacity: 0 }} className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-40 bg-gradient-to-b from-transparent to-void" />
           <div
               data-hero-fade
@@ -105,5 +108,6 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
       <Contact />
       {intro && <TearIntro onDone={() => setIntro(false)} />}
     </main>
+    </>
   )
 }

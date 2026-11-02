@@ -12,7 +12,7 @@ type Errors = Partial<Record<keyof Values, string>>
 const EMPTY: Values = { name: '', company: '', email: '', phone: '', type: '', budget: '', message: '', website: '' }
 const ORDER: (keyof Values)[] = ['name', 'company', 'email', 'phone', 'type', 'budget', 'message']
 
-export function validate(v: Values): Errors {
+function validate(v: Values): Errors {
   const e: Errors = {}
   if (v.name.trim().length < 2) e.name = 'Indiquez votre nom.'
   if (v.company.trim().length < 2) e.company = 'Indiquez le nom de votre entreprise.'
@@ -128,6 +128,9 @@ function ContactForm() {
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>Ne pas remplir<input tabIndex={-1} autoComplete="off" name="website" value={v.website} onChange={set('website')} /></label>
       </div>
+      <p className="md:col-span-2 max-w-xl text-xs leading-relaxed text-ash">
+        Les informations saisies servent uniquement à répondre à votre demande.
+      </p>
       <div className="md:col-span-2">
         <button
           type="submit"

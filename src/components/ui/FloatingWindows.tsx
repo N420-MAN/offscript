@@ -1,76 +1,14 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { DEMOS, type DemoSlug } from '../../demos/meta'
+import { DEMOS } from '../../demos/meta'
 import { stage } from '../../state/stage'
 import { TEAR, tearBottom, tearTop } from '../../lib/tear'
 import { prepare, STYLE_OF } from '../../lib/transitions'
 import { smoothstep } from '../../lib/math'
 import { prefersReducedMotion } from '../../hooks/useCapabilities'
-
-/** Warm the demo's code chunk while the window is still growing, so the tear reveals a live page. */
-const preload: Record<DemoSlug, () => Promise<unknown>> = {
-  medical: () => import('../../demos/Medical'),
-  hotel: () => import('../../demos/Hotel'),
-  residence: () => import('../../demos/Residence'),
-  finance: () => import('../../demos/Finance'),
-  shop: () => import('../../demos/Shop'),
-  ev: () => import('../../demos/Volta'),
-  ai: () => import('../../demos/Synapse'),
-  atelier: () => import('../../demos/Atelier'),
-  festival: () => import('../../demos/Festival'),
-  watch: () => import('../../demos/Watch'),
-}
-
-interface Body {
-  x: number // centre
-  y: number
-  vx: number
-  vy: number
-  w: number
-  h: number
-  s: number // depth scale: big = near, small = far
-  sc: number // current scale (s × fly-in growth)
-  en: number // 0..1 fly-in progress
-  delay: number
-  base: number // slowly drifting rest angle
-  drift: number // deg/s of self-rotation
-  wx: number // 3D tumble speeds / amplitudes
-  wy: number
-  Ax: number
-  Ay: number
-  ph: number
-  ox: number // where the window is "born" in the break, as a fraction of the frame
-  oy: number
-  sa: number // extra spin / tumble it sheds while it settles into a demo window
-  sx: number
-  sy: number
-  dim: HTMLElement | null
-  lastBlur: string
-  lastShadow: string
-  hx: number // pointer position inside the window, -1..1, for the hover tilt
-  hy: number
-  calm: number // 0..1, squares the window up while it is held or hovered
-  angle: number
-  spin: number
-  home: number
-  rx: number
-  ry: number
-  fade: number
-  ax: number // home position, as a fraction of the frame, eased toward until the visitor first touches the window
-  ay: number
-  free: boolean
-  px: number
-  py: number
-  drag: boolean
-  el: HTMLElement
-}
-
-const BAR = 26
-const RING_R = 62
-// Loose, uneven homes that keep the copy's area clear (desktop) or the lower half free (mobile).
-const HOMES_D: [number, number][] = [[0.52, 0.2], [0.72, 0.16], [0.9, 0.28], [0.62, 0.46], [0.82, 0.5], [0.5, 0.76], [0.68, 0.82], [0.9, 0.78], [0.34, 0.88], [0.38, 0.16]]
-const HOMES_M: [number, number][] = [[0.3, 0.56], [0.72, 0.52], [0.2, 0.7], [0.64, 0.68], [0.86, 0.82], [0.4, 0.84], [0.14, 0.92], [0.7, 0.94], [0.5, 0.6], [0.9, 0.62]]
-const rnd = (a: number, b: number) => a + Math.random() * (b - a)
+import { BAR, HOMES_D, HOMES_M, RING_R, preload, rnd, type Body } from './windows/shared'
+import { relaxPoints } from './windows/relax'
+import { WindowCard } from './windows/WindowCard'
 
 /**
  * The demo sites as windows adrift over the whole final frame, at random angles and depths.
@@ -157,56 +95,7 @@ export default function FloatingWindows() {
       if (W < 10) return
       textRect = measureText() ?? textRect
       const P = bodies.map((b) => ({ x: b.ax * W, y: b.ay * H, hw: b.w * b.s * 0.5, hh: b.h * b.s * 0.5 }))
-      for (let it = 0; it < 260; it++) {
-        for (let i = 0; i < P.length; i++) {
-          for (let j = i + 1; j < P.length; j++) {
-            const a = P[i]
-            const c = P[j]
-            const dx = c.x - a.x
-            const dy = c.y - a.y
-            const ox = a.hw + c.hw + 14 - Math.abs(dx)
-            const oy = a.hh + c.hh + 14 - Math.abs(dy)
-            if (ox <= 0 || oy <= 0) continue
-            if (ox < oy) {
-              const sg = dx >= 0 ? 1 : -1
-              a.x -= (sg * ox) / 2
-              c.x += (sg * ox) / 2
-            } else {
-              const sg = dy >= 0 ? 1 : -1
-              a.y -= (sg * oy) / 2
-              c.y += (sg * oy) / 2
-            }
-          }
-        }
-        P.forEach((a) => {
-          if (textRect) {
-            const l = a.x + a.hw - textRect.x
-            const r = textRect.x + textRect.width - (a.x - a.hw)
-            const tp = a.y + a.hh - textRect.y
-            const bt = textRect.y + textRect.height - (a.y - a.hh)
-            if (l > 0 && r > 0 && tp > 0 && bt > 0) {
-              // cheapest way out, with a preference for moving away to the right / below
-              const opts: [number, () => void][] = [
-                [l * 2.4, () => (a.x -= l)],
-                [r, () => (a.x += r)],
-                [tp * 1.4, () => (a.y -= tp)],
-                [bt, () => (a.y += bt)],
-              ]
-              opts.sort((m, n) => m[0] - n[0])[0][1]()
-            }
-          }
-          const rdx = a.x - ringC.x
-          const rdy = a.y - ringC.y
-          const rd = Math.hypot(rdx, rdy) || 1
-          const need = RING_R + 14 + Math.min(a.hw, a.hh) * 0.9
-          if (rd < need) {
-            a.x += (rdx / rd) * (need - rd)
-            a.y += (rdy / rd) * (need - rd)
-          }
-          a.x = Math.min(Math.max(a.x, a.hw + 10), W - a.hw - 10)
-          a.y = Math.min(Math.max(a.y, HDR + a.hh + 8), H - a.hh - 10)
-        })
-      }
+      relaxPoints(P, W, H, HDR, textRect, ringC)
       bodies.forEach((b, i) => {
         b.ax = P[i].x / W
         b.ay = P[i].y / H
@@ -540,7 +429,8 @@ export default function FloatingWindows() {
       if (minEn < 1) readyAt = 0
       const age = readyAt ? (now - readyAt) / 1000 : 0
       const ready = smoothstep(0.7, 1, minEn)
-      if (hint.current) hint.current.style.opacity = String(ready)
+      // the hint has done its job once the visitor has touched a window (on phones it also steps aside after a few seconds)
+      if (hint.current) hint.current.style.opacity = String(ready * (interacted || (W < 760 && age > 7) ? 0 : 1))
       if (cue.current) cue.current.style.opacity = stage.held && ready > 0.99 ? '1' : '0'
       if (ring.current) ring.current.style.opacity = String(ready)
 
@@ -791,10 +681,11 @@ export default function FloatingWindows() {
       <div
         ref={hint}
         style={{ zIndex: 3000 }}
-        className="pointer-events-none absolute bottom-11 left-4 max-w-[13rem] rounded-xl border border-bone/20 bg-void/70 p-3 backdrop-blur-md md:bottom-auto md:left-auto md:right-10 md:top-[5.4rem] md:max-w-[19rem] md:p-4"
+        className="pointer-events-none absolute bottom-11 left-4 max-w-[12rem] transition-opacity duration-500 rounded-xl border border-bone/20 bg-void/85 p-3 md:bottom-auto md:left-auto md:right-10 md:top-[5.4rem] md:max-w-[19rem] md:p-4"
       >
         <p className="label text-[0.7rem] text-signal">{DEMOS.length} démos à explorer</p>
-        <p className="mt-1.5 text-[0.8rem] leading-snug text-bone/85 md:text-sm">
+        <p className="mt-1.5 text-[0.8rem] leading-snug text-bone/85 md:hidden">Touchez une fenêtre pour l’ouvrir, ou lancez-la dans le cercle.</p>
+        <p className="mt-1.5 hidden text-sm leading-snug text-bone/85 md:block">
           Cliquez sur une fenêtre pour entrer dans le site. Ou attrapez-la, lancez-la, et déposez-la dans le cercle.
         </p>
       </div>
@@ -807,36 +698,13 @@ export default function FloatingWindows() {
         <span className="inline-block animate-bounce">↓</span> Continuez à défiler
       </p>
       {DEMOS.map((d, i) => (
-        <div
+        <WindowCard
           key={d.slug}
-          ref={(el) => {
+          demo={d}
+          setRef={(el) => {
             els.current[i] = el
           }}
-          role="button"
-          tabIndex={0}
-          aria-label={`Ouvrir ${d.name}, ${d.kind}`}
-          className="group pointer-events-auto absolute left-0 top-0 cursor-pointer touch-none pointer-coarse:touch-pan-y select-none overflow-hidden rounded-[10px] border border-white/15 bg-[#0b1020] will-change-transform active:cursor-grabbing"
-          style={{ width: 220, height: 160 }}
-        >
-          <div className="flex items-center gap-1.5 px-2.5" style={{ height: BAR, background: '#141a2e' }}>
-            <i className="h-2 w-2 rounded-full bg-[#ff5f57]" />
-            <i className="h-2 w-2 rounded-full bg-[#febc2e]" />
-            <i className="h-2 w-2 rounded-full bg-[#28c840]" />
-            <span className="ml-2 truncate font-mono text-[0.6rem] text-white/50">{d.name.toLowerCase().replace(/\s/g, '')}.ma</span>
-          </div>
-          <img src={`/demos/${d.slug}.jpg`} alt="" draggable={false} className="pointer-events-none block w-full" style={{ height: `calc(100% - ${BAR}px)`, objectFit: 'cover' }} />
-          <div data-dim className="pointer-events-none absolute inset-0 bg-black" style={{ opacity: 0 }} />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-10">
-            <span className="text-[0.85rem] font-semibold leading-tight text-white">
-              {d.name}
-              <span className="block font-mono text-[0.58rem] font-normal uppercase tracking-wider text-white/70">{d.kind}</span>
-            </span>
-            <span className="font-mono text-[0.6rem] uppercase tracking-wider text-signal">Démo ↗</span>
-          </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-data-[lit=true]:opacity-100" style={{ top: BAR }}>
-            <span className="label rounded-full bg-signal px-4 py-2 text-[0.7rem] text-void shadow-lg">Ouvrir la démo ↗</span>
-          </div>
-        </div>
+        />
       ))}
       <nav className="sr-only" aria-label="Projets">
         {DEMOS.map((d) => (

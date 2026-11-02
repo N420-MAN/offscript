@@ -4,6 +4,7 @@
  *   RESEND_API_KEY   your Resend API key
  *   CONTACT_TO       where inquiries are delivered (e.g. the studio's inbox)
  *   CONTACT_FROM     a sender on a domain verified in Resend, e.g. "OFFSCRIPT <contact@offscript.ma>"
+ *   ALLOWED_ORIGINS  (optional) extra hosts allowed to post, e.g. "offscript.ma,www.offscript.ma"
  * On other hosts (Netlify, Cloudflare), port this handler; the browser only needs POST JSON -> { ok: true }.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -14,6 +15,19 @@ export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json')
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Méthode non autorisée.' })
 
+  // only accept submissions coming from the site itself (ALLOWED_ORIGINS, comma-separated, adds extra hosts such as a custom domain)
+  const origin = String(req.headers.origin ?? '')
+  if (origin) {
+    let host = ''
+    try {
+      host = new URL(origin).host
+    } catch {
+      /* invalid origin */
+    }
+    const allowed = [String(req.headers.host ?? ''), ...String(process.env.ALLOWED_ORIGINS ?? '').split(',').map((h) => h.trim().replace(/^https?:\/\//, ''))].filter(Boolean)
+    if (!host || !allowed.includes(host)) return res.status(403).json({ ok: false, error: 'Origine non autorisée.' })
+  }
+
   // light per-instance rate limit: 5 requests / 10 minutes / IP
   const ip = String(req.headers['x-forwarded-for'] ?? 'unknown').split(',')[0].trim()
   const now = Date.now()
@@ -21,7 +35,14 @@ export default async function handler(req: any, res: any) {
   if (recent.length >= 5) return res.status(429).json({ ok: false, error: 'Trop de tentatives. Réessayez dans quelques minutes.' })
   hits.set(ip, [...recent, now])
 
-  const b = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {})
+  let b: any = {}
+  try {
+    const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {})
+    if (raw.length > 20_000) return res.status(413).json({ ok: false, error: 'Message trop volumineux.' })
+    b = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {})
+  } catch {
+    return res.status(400).json({ ok: false, error: 'Requête invalide.' })
+  }
   const s = (k: string, max: number) => String(b[k] ?? '').trim().slice(0, max)
   const name = s('name', 120)
   const company = s('company', 160)

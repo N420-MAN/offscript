@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Bloom, ChromaticAberration, EffectComposer, Vignette } from '@react-three/postprocessing'
+import { Bloom, ChromaticAberration, EffectComposer } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { clamp01, smoothstep } from '../../lib/math'
 import { stage } from '../../state/stage'
@@ -217,7 +217,7 @@ export default function Derail({ small, reduced }: SceneProps) {
   const textures = useMemo(() => {
     const make = (hot: boolean) =>
       Array.from({ length: SCREEN_VARIANTS }, (_, v) => {
-        const t = new THREE.CanvasTexture(drawScreen(v, v + 3, hot))
+        const t = new THREE.CanvasTexture(drawScreen(v, v + 3, hot, small ? 1 : 1.6))
         t.colorSpace = THREE.SRGBColorSpace
         t.anisotropy = 8
         return t
@@ -327,7 +327,7 @@ export default function Derail({ small, reduced }: SceneProps) {
         if (++gv.n === 90) {
           const avg = gv.t / 90
           const dpr = state.viewport.dpr
-          const floor = small ? 1.75 : 1.25
+          const floor = small ? 1.75 : 1.5
           const top = Math.max(floor, Math.min(window.devicePixelRatio || 1, 2))
           if (avg > 0.03 && dpr > floor) {
             state.setDpr(Math.max(floor, dpr - 0.25))
@@ -486,10 +486,9 @@ export default function Derail({ small, reduced }: SceneProps) {
         </instancedMesh>
       </group>
       {!small && (
-        <EffectComposer multisampling={0}>
+        <EffectComposer multisampling={small ? 0 : window.devicePixelRatio >= 2 ? 2 : 4}>
           <Bloom ref={bloom as never} mipmapBlur luminanceThreshold={0.88} luminanceSmoothing={0.2} intensity={0.45} />
           <ChromaticAberration ref={chroma as never} offset={new THREE.Vector2(0.0007, 0.0004)} radialModulation={false} modulationOffset={0} />
-          <Vignette eskil={false} offset={0.15} darkness={0.85} />
         </EffectComposer>
       )}
     </>

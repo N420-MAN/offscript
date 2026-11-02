@@ -10,9 +10,24 @@ const NAV = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
   const [solid, setSolid] = useState(false)
+  const [current, setCurrent] = useState('')
 
   useEffect(() => {
-    const on = () => setSolid(window.scrollY > window.innerHeight * 2.5)
+    const on = () => {
+      setSolid(window.scrollY > window.innerHeight * 2.5)
+      // the section the visitor is in: the one whose top is nearest above the middle of the screen
+      let cur = ''
+      let best = -Infinity
+      for (const [, href] of NAV) {
+        const el = document.querySelector(href)
+        const top = el ? el.getBoundingClientRect().top : Infinity
+        if (top <= window.innerHeight * 0.5 && top > best) {
+          best = top
+          cur = href
+        }
+      }
+      setCurrent(cur)
+    }
     on()
     window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
@@ -39,7 +54,15 @@ export function SiteHeader() {
         </a>
         <nav aria-label="Navigation principale" className="pointer-events-auto hidden gap-10 md:flex">
           {NAV.map(([label, href]) => (
-            <a key={label} href={href} className="label text-[0.95rem] text-bone/80 transition-colors hover:text-bone">{label}</a>
+            <a
+              key={label}
+              href={href}
+              aria-current={current === href ? 'location' : undefined}
+              className={`label relative text-[0.95rem] transition-colors hover:text-bone ${current === href ? 'text-bone' : 'text-bone/80'}`}
+            >
+              {label}
+              <span aria-hidden="true" className={`absolute -bottom-1.5 left-0 h-px bg-signal transition-all duration-300 ${current === href ? 'w-full' : 'w-0'}`} />
+            </a>
           ))}
         </nav>
         <p className="label hidden text-right text-[0.85rem] leading-snug text-bone/70 md:block">

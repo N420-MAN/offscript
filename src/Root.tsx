@@ -49,6 +49,7 @@ export default function Root() {
     const fallback = stageEl ? stageEl.offsetHeight - window.innerHeight - 2 : 0
     const y = saved.current ?? fallback
     stage.gateBypass = performance.now() + 600
+    stage.snap = true
     window.scrollTo(0, y)
     ScrollTrigger.refresh()
     window.scrollTo(0, y)

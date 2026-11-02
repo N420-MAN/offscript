@@ -44,3 +44,16 @@ Type-check clean; production build passes; Playwright on desktop (1440) and mobi
 - Tested with software WebGL only; real GPU and real phone performance are unverified.
 - Reduced-motion and non-WebGL fallbacks are implemented but only partly exercised in automated tests.
 - Ten demos and the hero WebGL chunk (~270 KB gzip) are heavy for low-end phones; post-processing is disabled on small screens.
+
+## Tuning and diagnostics
+
+- `?debug` on any URL shows a small overlay with the 3D frame rate, render resolution and canvas size (bottom-left).
+- Transition speed limit: `MAX_SPEED` in `src/hooks/useStageScroll.ts` (share of the journey per second; lower = slower).
+- 3D quality: the render resolution starts at its maximum and the governor in `src/scenes/objects/Derail.tsx` lowers it only after a
+  sustained slow stretch (floors: 1.5x on desktop, 1.75x on phones/tablets) and raises it again when frames are fast. Rotating a phone or
+  crossing the phone breakpoint rebuilds the scene with the right settings.
+- Contact API: set `ALLOWED_ORIGINS` (e.g. `offscript.ma,www.offscript.ma`) once the production domain is live. The rate limit is per
+  server instance; for a durable one, add a shared store (e.g. Upstash Redis).
+- The privacy line under the form ("Les informations saisies servent uniquement à répondre à votre demande.") must match your real data
+  handling: adjust it if you add analytics, a CRM or retention.
+- Tests (not shipped in the zip) live in `tests/`; `relax.test.mjs` checks the window layout without a browser.

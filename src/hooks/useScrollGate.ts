@@ -23,6 +23,8 @@ export function useScrollGate(ref: RefObject<HTMLElement | null>) {
       held = v
       stage.held = v
     }
+    // the scene has arrived (or, as a safety valve, the visitor has waited long enough): scrolling on is allowed
+    const settled = () => stage.progress >= 0.985 || performance.now() - arrivedAt > 5000
     const bypass = () => stage.gateBypass === Infinity || performance.now() < stage.gateBypass
 
     const onScroll = () => {
@@ -49,6 +51,10 @@ export function useScrollGate(ref: RefObject<HTMLElement | null>) {
     }
     const onWheel = (e: WheelEvent) => {
       if (!held || stage.paused) return
+      if (e.deltaY > 0 && !settled()) {
+        e.preventDefault() // the scene is still travelling at its own pace: let it arrive before scrolling on
+        return
+      }
       if (e.deltaY <= 0) {
         setHeld(false)
         return
@@ -68,19 +74,28 @@ export function useScrollGate(ref: RefObject<HTMLElement | null>) {
     let touchY = 0
     const onTouchStart = (e: TouchEvent) => {
       touchY = e.touches[0]?.clientY ?? 0
-      if (held && performance.now() - arrivedAt > 420) setHeld(false)
+      if (held && performance.now() - arrivedAt > 420 && settled()) setHeld(false)
     }
     const onTouchMove = (e: TouchEvent) => {
       if (!held) return
       const y = e.touches[0]?.clientY ?? touchY
       if (y > touchY + 6) setHeld(false) // swiping back up the page is never blocked
+      else if (!settled() && e.cancelable) e.preventDefault()
       else if (e.cancelable) e.preventDefault()
     }
     const onKey = (e: KeyboardEvent) => {
       if (!held) return
       if (!['ArrowDown', 'PageDown', ' ', 'End'].includes(e.key)) return
-      if (performance.now() - arrivedAt < 380) e.preventDefault()
+      if (performance.now() - arrivedAt < 380 || !settled()) e.preventDefault()
       else setHeld(false)
+    }
+    // Keyboard users tabbing out of the stage must never be pulled back: focus outside the stage lifts the gate.
+    const onFocusIn = (e: FocusEvent) => {
+      const el = ref.current
+      if (el && e.target instanceof Node && !el.contains(e.target)) {
+        stage.gateBypass = performance.now() + 900
+        if (held) setHeld(false)
+      }
     }
     const onResize = () => measure()
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -89,6 +104,7 @@ export function useScrollGate(ref: RefObject<HTMLElement | null>) {
     window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('keydown', onKey)
     window.addEventListener('resize', onResize)
+    window.addEventListener('focusin', onFocusIn)
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('wheel', onWheel)
@@ -96,6 +112,7 @@ export function useScrollGate(ref: RefObject<HTMLElement | null>) {
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('resize', onResize)
+      window.removeEventListener('focusin', onFocusIn)
       stage.held = false
     }
   }, [ref])
