@@ -16,6 +16,8 @@ export const stage = {
   held: false,
   /** Until this timestamp (ms), programmatic scrolls may pass the gate. */
   gateBypass: 0,
+  /** Minimum ms between rendered frames of the hero (0 = every frame); raised automatically on slow devices. */
+  interval: 0,
   /** Set by the canvas so non-animated frames (reduced motion) can be redrawn. */
   invalidate: () => {},
 }

@@ -118,7 +118,7 @@ export default function TearIntro({ onDone }: Props) {
           counter,
           {
             n: line.text.length,
-            duration: Math.max(0.18, line.text.length * 0.0125),
+            duration: Math.max(0.12, line.text.length * 0.0085),
             ease: 'none',
             onStart: () => targets.forEach((t) => t.classList.add('caret')),
             onUpdate: () => targets.forEach((t) => (t.textContent = line.text.slice(0, Math.round(counter.n)))),
@@ -129,7 +129,7 @@ export default function TearIntro({ onDone }: Props) {
       })
 
       // 2. Crack, then split
-      tl.addLabel('crack', '>+0.12')
+      tl.addLabel('crack', '>+0.05')
       tl.set(crack, { opacity: 1 }, 'crack')
       tl.fromTo(crack, { strokeDashoffset: crackLen }, { strokeDashoffset: 0, duration: 0.35, ease: 'power2.in', immediateRender: false }, 'crack')
       tl.addLabel('split', '>')
@@ -150,9 +150,9 @@ export default function TearIntro({ onDone }: Props) {
       tl.to(stage, { reveal: 1, duration: 2.8, ease: 'expo.out', onUpdate: () => stage.invalidate() }, 'split+=0.1')
 
       // Headline wipes up out of its masks, then the supporting copy, then the header, so the eye is led in order.
-      tl.fromTo(heroLines, { yPercent: 108 }, { yPercent: 0, duration: 1.2, stagger: 0.12, ease: 'expo.out' }, 'split+=1.0')
-      tl.fromTo(heroSubs, { autoAlpha: 0, y: 22 }, { autoAlpha: 1, y: 0, duration: 1, stagger: 0.12, ease: 'power3.out' }, 'split+=1.6')
-      tl.fromTo(heroHeader, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.9, ease: 'power2.out' }, 'split+=1.8')
+      tl.fromTo(heroLines, { yPercent: 108 }, { yPercent: 0, duration: 1.2, stagger: 0.12, ease: 'expo.out' }, 'split+=0.5')
+      tl.fromTo(heroSubs, { autoAlpha: 0, y: 22 }, { autoAlpha: 1, y: 0, duration: 1, stagger: 0.12, ease: 'power3.out' }, 'split+=0.9')
+      tl.fromTo(heroHeader, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.9, ease: 'power2.out' }, 'split+=1.1')
 
       if (import.meta.env.DEV) (window as unknown as { __tl?: gsap.core.Timeline }).__tl = tl
 

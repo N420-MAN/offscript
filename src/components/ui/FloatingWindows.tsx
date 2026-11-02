@@ -68,7 +68,7 @@ interface Body {
 const BAR = 26
 const RING_R = 62
 // Loose, uneven homes that keep the copy's area clear (desktop) or the lower half free (mobile).
-const HOMES_D: [number, number][] = [[0.5, 0.2], [0.72, 0.17], [0.92, 0.32], [0.6, 0.5], [0.82, 0.54], [0.48, 0.84], [0.68, 0.84], [0.92, 0.82], [0.26, 0.88], [0.24, 0.14]]
+const HOMES_D: [number, number][] = [[0.52, 0.2], [0.72, 0.16], [0.9, 0.28], [0.62, 0.46], [0.82, 0.5], [0.5, 0.76], [0.68, 0.82], [0.9, 0.78], [0.34, 0.88], [0.38, 0.16]]
 const HOMES_M: [number, number][] = [[0.3, 0.56], [0.72, 0.52], [0.2, 0.7], [0.64, 0.68], [0.86, 0.82], [0.4, 0.84], [0.14, 0.92], [0.7, 0.94], [0.5, 0.6], [0.9, 0.62]]
 const rnd = (a: number, b: number) => a + Math.random() * (b - a)
 
@@ -97,7 +97,6 @@ export default function FloatingWindows() {
     let HDR = 70
     let ringC = { x: 0, y: 0 }
     let started = false
-    let lastTouch = performance.now()
     let hovered = -1
     let z = 20
     let diving = false
@@ -125,6 +124,95 @@ export default function FloatingWindows() {
       b.y = Math.min(Math.max(b.y, HDR + hh), H - hh - 6)
     }
 
+    const measureText = (): DOMRect | null => {
+      const tb = document.querySelector('[data-statement] > div')
+      if (!tb) return null
+      const rr = rootEl.getBoundingClientRect()
+      // the real extent of the words (the container itself is wider than the text)
+      let l = Infinity
+      let t = Infinity
+      let r = -Infinity
+      let bt = -Infinity
+      const walker = document.createTreeWalker(tb, NodeFilter.SHOW_TEXT)
+      const range = document.createRange()
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        if (!n.textContent?.trim()) continue
+        range.selectNodeContents(n)
+        for (const q of Array.from(range.getClientRects())) {
+          if (q.width < 2) continue
+          l = Math.min(l, q.left)
+          t = Math.min(t, q.top)
+          r = Math.max(r, q.right)
+          bt = Math.max(bt, q.bottom)
+        }
+      }
+      if (!isFinite(l)) return null
+      // the copy slides up as it fades in: measure it where it will rest
+      const off = Number(gsap.getProperty(tb.parentElement as Element, 'y')) || 0
+      return new DOMRect(l - rr.left - 16, t - off - rr.top - 14, r - l + 32, bt - t + 28)
+    }
+
+    /** Spread the resting places so windows do not sit on each other, the copy, or the drop ring. */
+    const relaxHomes = () => {
+      if (W < 10) return
+      textRect = measureText() ?? textRect
+      const P = bodies.map((b) => ({ x: b.ax * W, y: b.ay * H, hw: b.w * b.s * 0.5, hh: b.h * b.s * 0.5 }))
+      for (let it = 0; it < 260; it++) {
+        for (let i = 0; i < P.length; i++) {
+          for (let j = i + 1; j < P.length; j++) {
+            const a = P[i]
+            const c = P[j]
+            const dx = c.x - a.x
+            const dy = c.y - a.y
+            const ox = a.hw + c.hw + 14 - Math.abs(dx)
+            const oy = a.hh + c.hh + 14 - Math.abs(dy)
+            if (ox <= 0 || oy <= 0) continue
+            if (ox < oy) {
+              const sg = dx >= 0 ? 1 : -1
+              a.x -= (sg * ox) / 2
+              c.x += (sg * ox) / 2
+            } else {
+              const sg = dy >= 0 ? 1 : -1
+              a.y -= (sg * oy) / 2
+              c.y += (sg * oy) / 2
+            }
+          }
+        }
+        P.forEach((a) => {
+          if (textRect) {
+            const l = a.x + a.hw - textRect.x
+            const r = textRect.x + textRect.width - (a.x - a.hw)
+            const tp = a.y + a.hh - textRect.y
+            const bt = textRect.y + textRect.height - (a.y - a.hh)
+            if (l > 0 && r > 0 && tp > 0 && bt > 0) {
+              // cheapest way out, with a preference for moving away to the right / below
+              const opts: [number, () => void][] = [
+                [l * 2.4, () => (a.x -= l)],
+                [r, () => (a.x += r)],
+                [tp * 1.4, () => (a.y -= tp)],
+                [bt, () => (a.y += bt)],
+              ]
+              opts.sort((m, n) => m[0] - n[0])[0][1]()
+            }
+          }
+          const rdx = a.x - ringC.x
+          const rdy = a.y - ringC.y
+          const rd = Math.hypot(rdx, rdy) || 1
+          const need = RING_R + 14 + Math.min(a.hw, a.hh) * 0.9
+          if (rd < need) {
+            a.x += (rdx / rd) * (need - rd)
+            a.y += (rdy / rd) * (need - rd)
+          }
+          a.x = Math.min(Math.max(a.x, a.hw + 10), W - a.hw - 10)
+          a.y = Math.min(Math.max(a.y, HDR + a.hh + 8), H - a.hh - 10)
+        })
+      }
+      bodies.forEach((b, i) => {
+        b.ax = P[i].x / W
+        b.ay = P[i].y / H
+      })
+    }
+
     const layout = () => {
       const rr = rootEl.getBoundingClientRect()
       if (rr.width < 10) return // home page hidden under a demo: keep the last real layout
@@ -133,7 +221,12 @@ export default function FloatingWindows() {
       HDR = W < 760 ? 64 : 72
       cv.width = W
       cv.height = H
-      const base = W < 760 ? Math.min(190, W * 0.46) : Math.min(400, Math.max(270, W * 0.235))
+      // size the windows so they fill about half of the free area: big, but with room to breathe
+      const tb = measureText()
+      const free = W * H - (tb ? tb.width * tb.height : 0)
+      const target = (free * 0.42) / Math.max(1, bodies.length)
+      const fit = (-26 + Math.sqrt(676 + 2.5 * target)) / 1.25
+      const base = W < 760 ? Math.max(132, Math.min(190, W * 0.4)) : Math.max(230, Math.min(360, fit))
       bodies.forEach((b) => {
         b.w = base
         b.h = base * 0.625 + BAR
@@ -151,8 +244,8 @@ export default function FloatingWindows() {
     DEMOS.forEach((_, i) => {
       const el = els.current[i]
       if (!el) return
-      const s = rnd(0.74, 1.14)
-      bodies.push({ x: 0, y: 0, vx: 0, vy: 0, w: 220, h: 160, s, sc: 0, en: 0, delay: 0, base: 0, drift: Math.random() < 0.6 ? rnd(5, 13) * (Math.random() < 0.5 ? -1 : 1) : 0, wx: rnd(0.16, 0.32), wy: rnd(0.13, 0.28), Ax: rnd(14, 32), Ay: rnd(32, 62), ph: rnd(0, 6.28), ox: 0.5, oy: 0.5, sa: 0, sx: 0, sy: 0, dim: el.querySelector<HTMLElement>('[data-dim]'), lastBlur: 'none', lastShadow: '', hx: 0, hy: 0, calm: 0, angle: 0, spin: 0, home: rnd(-30, 30), rx: 0, ry: 0, fade: 0, ax: 0.5, ay: 0.5, free: false, px: 0, py: 0, drag: false, el })
+      const s = rnd(0.82, 1.1)
+      bodies.push({ x: 0, y: 0, vx: 0, vy: 0, w: 220, h: 160, s, sc: 0, en: 0, delay: 0, base: 0, drift: Math.random() < 0.6 ? rnd(2.5, 6.5) * (Math.random() < 0.5 ? -1 : 1) : 0, wx: rnd(0.07, 0.15), wy: rnd(0.06, 0.13), Ax: rnd(10, 22), Ay: rnd(22, 42), ph: rnd(0, 6.28), ox: 0.5, oy: 0.5, sa: 0, sx: 0, sy: 0, dim: el.querySelector<HTMLElement>('[data-dim]'), lastBlur: 'none', lastShadow: '', hx: 0, hy: 0, calm: 0, angle: 0, spin: 0, home: rnd(-30, 30), rx: 0, ry: 0, fade: 0, ax: 0.5, ay: 0.5, free: false, px: 0, py: 0, drag: false, el })
       el.style.zIndex = String(Math.round(s * 10))
     })
     layout()
@@ -166,8 +259,6 @@ export default function FloatingWindows() {
         b.ay = h[1]
         b.free = false
         b.base = b.home
-        b.x = b.ax * W
-        b.y = b.ay * H
         b.vx = b.vy = 0
         b.angle = b.home
         b.spin = 0
@@ -182,6 +273,15 @@ export default function FloatingWindows() {
           b.sa = rnd(-260, 260)
           b.sx = rnd(-85, 85)
           b.sy = rnd(-85, 85)
+        }
+      })
+      relaxHomes()
+      bodies.forEach((b) => {
+        b.x = b.ax * W
+        b.y = b.ay * H
+        if (reduced) {
+          b.ox = b.ax
+          b.oy = b.ay
         }
       })
     }
@@ -306,7 +406,6 @@ export default function FloatingWindows() {
         t0 = lastT = performance.now()
         el.style.zIndex = String(++z)
         el.setPointerCapture(e.pointerId)
-        lastTouch = t0
         void preload[DEMOS[i].slug]()
         interacted = true
       }
@@ -332,7 +431,6 @@ export default function FloatingWindows() {
         lastT = now
         ptr = { x: px, y: py }
         moved = Math.hypot(e.clientX - startX, e.clientY - startY)
-        lastTouch = now
       }
       const up = (e: PointerEvent) => {
         if (!b.drag) {
@@ -354,14 +452,19 @@ export default function FloatingWindows() {
           return
         }
         const sp = Math.hypot(b.vx, b.vy)
-        const cap = 1900
+        const cap = 900
         if (sp > cap) {
           b.vx *= cap / sp
           b.vy *= cap / sp
         }
         // A pause before release means "put it down"; a flick spins the window.
         if (performance.now() - lastT > 90) b.vx = b.vy = 0
-        else b.spin = Math.max(-360, Math.min(360, b.vx * 0.07 + (Math.random() - 0.5) * 100))
+        else b.spin = Math.max(-200, Math.min(200, b.vx * 0.04 + (Math.random() - 0.5) * 40))
+      }
+      // the browser took the gesture over (a vertical swipe scrolling the page on a phone): not a tap, not a drag
+      const cancel = () => {
+        tap = false
+        b.drag = false
       }
       const key = (e: KeyboardEvent) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -377,7 +480,7 @@ export default function FloatingWindows() {
       el.addEventListener('pointerdown', down)
       el.addEventListener('pointermove', move)
       el.addEventListener('pointerup', up)
-      el.addEventListener('pointercancel', up)
+      el.addEventListener('pointercancel', cancel)
       el.addEventListener('keydown', key)
       el.addEventListener('pointerenter', enter)
       el.addEventListener('pointerleave', leave)
@@ -385,7 +488,7 @@ export default function FloatingWindows() {
         el.removeEventListener('pointerdown', down)
         el.removeEventListener('pointermove', move)
         el.removeEventListener('pointerup', up)
-        el.removeEventListener('pointercancel', up)
+        el.removeEventListener('pointercancel', cancel)
         el.removeEventListener('keydown', key)
         el.removeEventListener('pointerenter', enter)
         el.removeEventListener('pointerleave', leave)
@@ -411,7 +514,6 @@ export default function FloatingWindows() {
       }
       if (!started) {
         started = true
-        lastTouch = now
         readyAt = 0
         layout()
         place()
@@ -419,12 +521,7 @@ export default function FloatingWindows() {
       const t = now / 1000
 
       if (frame++ % 6 === 0) {
-        const tb = document.querySelector('[data-statement] > div')
-        if (tb) {
-          const rr = rootEl.getBoundingClientRect()
-          const r = tb.getBoundingClientRect()
-          textRect = new DOMRect(r.left - rr.left - 14, r.top - rr.top - 10, r.width + 28, r.height + 20)
-        }
+        textRect = measureText() ?? textRect
       }
 
       // scroll-driven entry: windows grow out of the break one after another, tumbling, and settle
@@ -447,21 +544,11 @@ export default function FloatingWindows() {
       if (!reduced) {
         if (!interacted && readyAt && age > 3.5 && now > nextAttract) {
           attractIdx = Math.floor(Math.random() * bodies.length)
-          attractUntil = now + 1700
-          nextAttract = now + 3600
-          bodies[attractIdx].vy -= 70
+          attractUntil = now + 1900
+          nextAttract = now + 4200
         }
-        if (readyAt && now - lastTouch > 9000 && age > 4) {
-          const b = bodies[Math.floor(Math.random() * bodies.length)]
-          b.free = true
-          const a = Math.random() * Math.PI * 2
-          b.vx += Math.cos(a) * 240
-          b.vy += Math.sin(a) * 240
-          b.spin += rnd(-120, 120)
-          lastTouch = now - 5000
-        }
-        const fr = Math.pow(0.5, dt)
-        const sd = Math.pow(0.35, dt)
+        const sd = Math.pow(0.02, dt)
+        const glide = Math.pow(0.2, dt)
         bodies.forEach((b, i) => {
           if (b.en < 1) {
             // still arriving: the scroll position places it, from its birth point to its home
@@ -477,90 +564,96 @@ export default function FloatingWindows() {
             b.angle += (b.home * 0.3 + Math.max(-12, Math.min(12, b.vx * 0.01)) - b.angle) * Math.min(1, dt * 7)
             return
           }
-          // a lazy drift, like something floating in still water
-          b.vx += Math.sin(t * 0.43 + i * 1.9) * 20 * dt
-          b.vy += Math.cos(t * 0.37 + i * 2.3) * 20 * dt
           if (!b.free) {
-            const kk = 0.5 + (1 - b.en) * 2
-            b.vx += (b.ax * W - b.x) * kk * dt
-            b.vy += (b.ay * H - b.y) * kk * dt
+            // float around its place on slow, overlapping swells; a critically damped spring keeps it smooth, never jittery
+            const wx = Math.sin(t * 0.13 + b.ph) * 18 + Math.sin(t * 0.07 + b.ph * 2.3) * 10
+            const wy = Math.cos(t * 0.11 + b.ph * 1.4) * 14 + Math.sin(t * 0.06 + b.ph) * 8
+            const k = 2.2
+            const c = 2 * Math.sqrt(k)
+            b.vx += ((b.ax * W + wx - b.x) * k - b.vx * c) * dt
+            b.vy += ((b.ay * H + wy - b.y) * k - b.vy * c) * dt
+          } else {
+            // thrown: it glides and slows like something moving through water, then this becomes its new place
+            b.vx *= glide
+            b.vy *= glide
+            if (Math.hypot(b.vx, b.vy) < 14) {
+              b.free = false
+              b.ax = b.x / W
+              b.ay = b.y / H
+            }
           }
-          // keep clear of the copy: windows drift out of its way instead of resting behind it
-          if (textRect && !b.drag) {
+          const sp = Math.hypot(b.vx, b.vy)
+          const cap = b.free ? 1100 : 220
+          if (sp > cap) {
+            b.vx *= cap / sp
+            b.vy *= cap / sp
+          }
+          // keep clear of the copy: windows ease out of its way instead of resting behind it
+          if (textRect) {
             const { hw: ew, hh: eh } = ext(b)
             const ox2 = Math.min(b.x + ew - textRect.x, textRect.x + textRect.width - (b.x - ew))
             const oy2 = Math.min(b.y + eh - textRect.y, textRect.y + textRect.height - (b.y - eh))
-            if (ox2 > 0 && oy2 > 0) {
-              const k2 = Math.min(1, Math.min(ox2, oy2) / 160)
-              if (ox2 <= oy2 * 1.6) b.vx += (b.x < textRect.x + textRect.width / 2 ? -1 : 1) * (b.x < W * 0.55 ? 1 : 0.4) * 700 * k2 * dt
-              else b.vy += (b.y < textRect.y + textRect.height / 2 ? -1 : 1) * 700 * k2 * dt
-              if (b.x - ew < textRect.x + textRect.width && b.x < textRect.x + textRect.width) b.vx += 520 * k2 * dt
-            }
+            if (ox2 > 0 && oy2 > 0 && b.x < textRect.x + textRect.width) b.vx += Math.min(1, ox2 / 160) * 560 * dt
           }
-          b.vx *= fr
-          b.vy *= fr
           b.x += b.vx * dt
           b.y += b.vy * dt
-          // self-rotation: a slowly drifting rest angle, followed by a soft spring; squares up when held or hovered
+          // self-rotation: a slowly drifting rest angle followed by a damped spring; squares up when held or hovered
           b.base += b.drift * dt * (1 - b.calm)
           const rest = Math.round(b.base / 360) * 360 + b.home * 0.3
-          const target = (b.base + Math.sin(t * 0.3 + i * 2.1) * 10) * (1 - b.calm) + rest * b.calm
-          b.spin += (target - b.angle) * 4.5 * dt
+          const target = (b.base + Math.sin(t * 0.2 + i * 2.1) * 6) * (1 - b.calm) + rest * b.calm
+          b.spin += (target - b.angle) * 6 * dt
           b.spin *= sd
           b.angle += b.spin * dt
           const { hw, hh } = ext(b)
           if (b.x < hw + 6) {
             b.x = hw + 6
-            b.vx = Math.abs(b.vx) * 0.66
-            b.spin += b.vy * 0.02
+            b.vx = Math.abs(b.vx) * 0.5
           } else if (b.x > W - hw - 6) {
             b.x = W - hw - 6
-            b.vx = -Math.abs(b.vx) * 0.66
-            b.spin -= b.vy * 0.02
+            b.vx = -Math.abs(b.vx) * 0.5
           }
           if (b.y < HDR + hh) {
             b.y = HDR + hh
-            b.vy = Math.abs(b.vy) * 0.66
-            b.spin -= b.vx * 0.02
+            b.vy = Math.abs(b.vy) * 0.5
           } else if (b.y > H - hh - 6) {
             b.y = H - hh - 6
-            b.vy = -Math.abs(b.vy) * 0.66
-            b.spin += b.vx * 0.02
+            b.vy = -Math.abs(b.vy) * 0.5
           }
         })
-        // soft body-to-body collisions: they nudge each other and trade a little momentum and spin
+        // windows never stack: overlapping pairs ease apart along the shortest way out
+        const sep = Math.min(1, dt * 5)
         for (let i = 0; i < bodies.length; i++) {
           for (let j = i + 1; j < bodies.length; j++) {
             const A = bodies[i]
             const B = bodies[j]
-            if (A.en < 0.8 || B.en < 0.8) continue
+            if (A.en < 1 || B.en < 1) continue
+            const ea = ext(A)
+            const eb = ext(B)
             const dx = B.x - A.x
             const dy = B.y - A.y
-            const dist = Math.hypot(dx, dy) || 1
-            const min = 0.3 * (A.w * A.sc + B.w * B.sc)
-            if (dist >= min) continue
-            const nx = dx / dist
-            const ny = dy / dist
-            const push = min - dist
+            const ox = (ea.hw + eb.hw) * 0.92 - Math.abs(dx)
+            const oy = (ea.hh + eb.hh) * 0.92 - Math.abs(dy)
+            if (ox <= 0 || oy <= 0) continue
             const wa = A.drag ? 0 : B.drag ? 1 : 0.5
             const wb = B.drag ? 0 : A.drag ? 1 : 0.5
-            A.x -= nx * push * wa
-            A.y -= ny * push * wa
-            B.x += nx * push * wb
-            B.y += ny * push * wb
-            const rel = (B.vx - A.vx) * nx + (B.vy - A.vy) * ny
-            if (rel < 0) {
-              const imp = -rel * 0.6
-              if (!A.drag) {
-                A.vx -= nx * imp * wa * 2
-                A.vy -= ny * imp * wa * 2
+            if (ox < oy) {
+              const sg = dx >= 0 ? 1 : -1
+              A.x -= sg * ox * sep * wa
+              B.x += sg * ox * sep * wb
+              const rel = (B.vx - A.vx) * sg
+              if (rel < 0) {
+                A.vx += sg * rel * 0.5 * wa
+                B.vx -= sg * rel * 0.5 * wb
               }
-              if (!B.drag) {
-                B.vx += nx * imp * wb * 2
-                B.vy += ny * imp * wb * 2
+            } else {
+              const sg = dy >= 0 ? 1 : -1
+              A.y -= sg * oy * sep * wa
+              B.y += sg * oy * sep * wb
+              const rel = (B.vy - A.vy) * sg
+              if (rel < 0) {
+                A.vy += sg * rel * 0.5 * wa
+                B.vy -= sg * rel * 0.5 * wb
               }
-              A.spin += (-ny * (B.vx - A.vx) + nx * (B.vy - A.vy)) * 0.05
-              B.spin += (-ny * (B.vx - A.vx) + nx * (B.vy - A.vy)) * 0.05
             }
           }
         }
@@ -591,7 +684,7 @@ export default function FloatingWindows() {
         }
         b.px = b.x
         b.py = b.y
-        const k = Math.min(1, dt * 2.6)
+        const k = Math.min(1, dt * 1.8)
         // each window tumbles on its own: yaw and pitch swing slowly and out of step, so it rarely faces forward
         const amp = 1 - b.calm
         const ee = b.en * b.en * (3 - 2 * b.en)
@@ -611,14 +704,14 @@ export default function FloatingWindows() {
         const lit = b.drag || hovered === i
         const face = Math.cos((b.ry * Math.PI) / 180) * Math.cos((b.rx * Math.PI) / 180)
         const bright = (lit ? 1 : 0.64 + 0.36 * near) * (0.68 + 0.32 * face)
-        const op = (lit ? 1 : 0.82 + 0.18 * near) * (1 - 0.74 * b.fade)
+        const op = (lit ? 1 : 0.82 + 0.18 * near) * (1 - 0.4 * b.fade)
         const lift = b.drag ? 1.08 : hovered === i ? 1.07 : 1
         b.el.style.transform = `translate3d(${b.x - b.w / 2}px,${b.y - b.h / 2}px,0) rotate(${b.angle}deg) rotateX(${b.rx}deg) rotateY(${b.ry}deg) scale(${b.sc * lift})`
         b.el.style.visibility = b.sc > 0.002 ? 'inherit' : 'hidden'
         b.el.style.opacity = String(op)
         const dimEl = b.dim
         if (dimEl) dimEl.style.opacity = (1 - bright).toFixed(3)
-        const blurPx = b.fade > 0.02 ? `blur(${(b.fade * 3.4).toFixed(1)}px)` : 'none'
+        const blurPx = 'none'
         if (blurPx !== b.lastBlur) {
           b.el.style.filter = blurPx
           b.lastBlur = blurPx
@@ -649,11 +742,19 @@ export default function FloatingWindows() {
       forceAttract = true
       attractIdx = i
       attractUntil = performance.now() + 2400
-      bodies[i].vy -= 90
-      lastTouch = performance.now()
     }
     window.addEventListener('offscript:return', onReturn)
-    const onResize = () => layout()
+    let lastW = window.innerWidth
+    let lastH = window.innerHeight
+    const onResize = () => {
+      // the phone's address bar changes only the height: that must not re-flow the windows
+      const touch = 'ontouchstart' in window
+      if (touch && window.innerWidth === lastW && Math.abs(window.innerHeight - lastH) < 180) return
+      lastW = window.innerWidth
+      lastH = window.innerHeight
+      layout()
+      relaxHomes()
+    }
     window.addEventListener('resize', onResize)
     return () => {
       cancelAnimationFrame(raf)
@@ -711,7 +812,7 @@ export default function FloatingWindows() {
           role="button"
           tabIndex={0}
           aria-label={`Ouvrir ${d.name}, ${d.kind}`}
-          className="group pointer-events-auto absolute left-0 top-0 cursor-pointer touch-none select-none overflow-hidden rounded-[10px] border border-white/15 bg-[#0b1020] will-change-transform active:cursor-grabbing"
+          className="group pointer-events-auto absolute left-0 top-0 cursor-pointer touch-none pointer-coarse:touch-pan-y select-none overflow-hidden rounded-[10px] border border-white/15 bg-[#0b1020] will-change-transform active:cursor-grabbing"
           style={{ width: 220, height: 160 }}
         >
           <div className="flex items-center gap-1.5 px-2.5" style={{ height: BAR, background: '#141a2e' }}>

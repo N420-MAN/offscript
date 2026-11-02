@@ -6,6 +6,8 @@ import { smoothstep } from '../lib/math'
 import { stage } from '../state/stage'
 
 gsap.registerPlugin(ScrollTrigger)
+// The phone's address bar resizes the viewport while scrolling; that must not trigger a full recalculation.
+ScrollTrigger.config({ ignoreMobileResize: true })
 
 /** Maps scroll through the pinned stage to the shared progress value and the DOM layers that depend on it. */
 export function useStageScroll(ref: RefObject<HTMLElement | null>) {
@@ -18,7 +20,8 @@ export function useStageScroll(ref: RefObject<HTMLElement | null>) {
         trigger: ref.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: true,
+        // a little smoothing on touch screens turns stepped finger-scrolling into one continuous motion
+        scrub: window.matchMedia('(pointer: coarse)').matches ? 0.5 : true,
         onUpdate: (self) => {
           const p = self.progress
           stage.progress = p

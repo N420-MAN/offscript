@@ -48,10 +48,13 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
 
   // The hero only works while it is on screen and no demo is open on top of it.
   const [inView, setInView] = useState(true)
-  const [shown, setShown] = useState(!hidden)
+  const [shown, setShown] = useState(false)
+  // Mount the heavy 3D scene a moment after first paint, while the intro types, instead of competing with it.
   useEffect(() => {
-    if (!hidden) setShown(true)
-  }, [hidden])
+    if (hidden || shown) return
+    const id = window.setTimeout(() => setShown(true), intro ? 900 : 150)
+    return () => window.clearTimeout(id)
+  }, [hidden, shown, intro])
   useEffect(() => {
     const el = stageRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -70,7 +73,7 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
       <div ref={stageRef} data-stage className="relative" style={{ height: '320vh' }}>
         {/* Anchor for the "Projets" link: the frame where the work floats. */}
         <div id="projets" aria-hidden="true" className="absolute left-0 w-px" style={{ top: 'calc(320vh - 100dvh)' }} />
-        <div className="sticky top-0 h-[100dvh] overflow-hidden">
+        <div className="sticky top-0 h-[100dvh] overflow-hidden" style={{ height: '100svh' }}>
           <StaticBackdrop />
           {webgl && shown && (
             <div

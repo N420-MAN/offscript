@@ -36,7 +36,7 @@ body {
   color: var(--color-bone);
   font-family: var(--font-display);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 ::selection {

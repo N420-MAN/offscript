@@ -317,7 +317,12 @@ export default function Derail({ small, reduced }: SceneProps) {
       else {
         gv.t += rawDelta
         if (++gv.n === 60) {
-          if (gv.t / 60 > 0.023 && state.viewport.dpr > 1) state.setDpr(Math.max(1, state.viewport.dpr - 0.25))
+          const avg = gv.t / 60
+          const dpr = state.viewport.dpr
+          if (avg > 0.023 && dpr > 1) state.setDpr(Math.max(1, dpr - 0.25))
+          else if (avg > 0.04 && dpr > 0.6) state.setDpr(Math.max(0.6, dpr - 0.2))
+          else if (avg > 0.075 && stage.interval < 66) stage.interval = 66
+          else if (avg > 0.04 && stage.interval < 33) stage.interval = 33
           gv.t = gv.n = 0
         }
       }
