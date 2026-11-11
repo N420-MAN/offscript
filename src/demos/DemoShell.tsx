@@ -13,7 +13,7 @@ const pages: Record<DemoSlug, React.LazyExoticComponent<() => React.JSX.Element>
   shop: lazy(() => import('./Shop')),
   ev: lazy(() => import('./Volta')),
   ai: lazy(() => import('./Synapse')),
-  atelier: lazy(() => import('./Atelier')),
+  rental: lazy(() => import('./Rental')),
   festival: lazy(() => import('./Festival')),
   school: lazy(() => import('./School')),
 }

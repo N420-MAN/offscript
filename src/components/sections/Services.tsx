@@ -8,7 +8,7 @@ import { prefersReducedMotion } from '../../hooks/useCapabilities'
 gsap.registerPlugin(ScrollTrigger)
 
 /** One demo that shows each area of expertise at work; its preview follows the pointer over the list. */
-const PREVIEW = ['restaurant', 'atelier', 'ai', 'residence'] as const
+const PREVIEW = ['restaurant', 'rental', 'ai', 'residence'] as const
 
 /**
  * Four areas of expertise as one typographic stack: the open line grows, the others recede. Hover, focus or tap.

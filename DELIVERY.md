@@ -120,3 +120,18 @@ Fragment (shop), Volta (EV) and Pulse (festival) are untouched.
 - Clinic, Verticale and Atelier: alt text corrected to describe what each photo shows.
 - Unused photos are removed, along with their footer credits.
 - public/media/README.txt now says that hotel/, residence/ and volta/ came with offscript-1.
+
+### Verticale redesign and Rihla (replaces Atelier Null)
+
+- Verticale has a new design:
+  - limestone, brass and deep green, with Bodoni Moda and Hanken Grotesk;
+  - the name runs vertically down the hero, the photos are tall portrait frames, and the gallery stands like a skyline;
+  - new sections: a neighbourhood section (distances from Bourgogne) and a video-visit option for buyers abroad;
+  - the same four photos and the same scroll animation of the tower opening floor by floor.
+- Atelier Null is removed and replaced by Rihla (slug `rental`), a car rental agency in Marrakech and Casablanca:
+  - search by pickup place, return place, date and duration;
+  - a fleet of 7 cars (Logan to Prado) with prices per day that drop for longer rentals;
+  - road trips, each marked by a Moroccan kilometre post, with a scroll-drawn road and the kilometres counting up;
+  - clear conditions, and booking with options, a live total, payment on delivery and a WhatsApp field;
+  - an FAQ.
+- 12 free-licence photos are in `public/media/rental/`, credited in the footer. The fonts were added to package.json.

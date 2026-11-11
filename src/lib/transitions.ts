@@ -13,7 +13,7 @@ export const STYLE_OF: Record<string, Reveal | 'rip'> = {
   shop: 'rip', // paper tearing
   ev: 'charge', // a charge sweeping across
   ai: 'dots', // pixels dissolving into nodes
-  atelier: 'doors', // clean sliding doors
+  rental: 'doors', // garage doors sliding open
   festival: 'pulse', // beat-synced pulses
   school: 'dial', // a clock hand sweeping: the school day
 }

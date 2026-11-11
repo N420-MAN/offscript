@@ -9,7 +9,7 @@ export const preload: Record<DemoSlug, () => Promise<unknown>> = {
   shop: () => import('../../../demos/Shop'),
   ev: () => import('../../../demos/Volta'),
   ai: () => import('../../../demos/Synapse'),
-  atelier: () => import('../../../demos/Atelier'),
+  rental: () => import('../../../demos/Rental'),
   festival: () => import('../../../demos/Festival'),
   school: () => import('../../../demos/School'),
 }
