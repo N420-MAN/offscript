@@ -1,4 +1,4 @@
-import type { DEMOS } from '../../../demos/meta'
+import { preview, type DEMOS } from '../../../demos/meta'
 import { BAR } from './shared'
 
 /** One floating demo window (presentation only: FloatingWindows owns its position, rotation and interaction). */
@@ -18,7 +18,7 @@ export function WindowCard({ demo: d, setRef }: { demo: (typeof DEMOS)[number]; 
         <i className="h-2 w-2 rounded-full bg-[#28c840]" />
         <span className="ml-2 truncate font-mono text-[0.6rem] text-white/50">{d.kind}</span>
       </div>
-      <img src={`/demos/${d.slug}.jpg`} alt="" draggable={false} className="pointer-events-none block w-full" style={{ height: `calc(100% - ${BAR}px)`, objectFit: 'cover' }} />
+      <img src={preview(d.slug)} alt="" draggable={false} className="pointer-events-none block w-full" style={{ height: `calc(100% - ${BAR}px)`, objectFit: 'cover' }} />
       <div data-dim className="pointer-events-none absolute inset-0 bg-black" style={{ opacity: 0 }} />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-10">
         <span className="text-[0.85rem] font-semibold leading-tight text-white">

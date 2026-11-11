@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { preview } from '../../demos/meta'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
@@ -98,7 +99,7 @@ export default function Services() {
           {PREVIEW.map((slug, i) => (
             <img
               key={slug}
-              src={`/demos/${slug}.jpg`}
+              src={preview(slug)}
               alt=""
               loading="lazy"
               decoding="async"

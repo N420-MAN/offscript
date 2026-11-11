@@ -1,5 +1,5 @@
 import gsap from 'gsap'
-import type { DemoSlug } from '../demos/meta'
+import { preview, type DemoSlug } from '../demos/meta'
 import { preload } from '../components/ui/windows/shared'
 import { curtainLayer, mounted, prepare, STYLE_OF } from './transitions'
 import { prefersReducedMotion } from '../hooks/useCapabilities'
@@ -14,7 +14,7 @@ export function growToCurtain(slug: DemoSlug, cover: HTMLElement, rect: { left: 
   const win = document.createElement('div')
   win.style.cssText = `position:absolute;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;overflow:hidden;border-radius:${radius}px;background:#0b1020;transform:rotate(${rotation}deg);box-shadow:0 30px 80px rgba(0,0,0,.6)`
   const im = document.createElement('img')
-  im.src = `/demos/${slug}.jpg`
+  im.src = preview(slug)
   im.alt = ''
   im.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block'
   const curtain = curtainLayer(slug)

@@ -1,4 +1,4 @@
-import { DEMOS } from '../../demos/meta'
+import { DEMOS, preview } from '../../demos/meta'
 import { openDemoFrom } from '../../lib/openDemo'
 import { preload } from '../ui/windows/shared'
 
@@ -45,7 +45,7 @@ export default function Work() {
                 </div>
                 <div className="aspect-[16/10] overflow-hidden">
                   <img
-                    src={`/demos/${d.slug}.jpg`}
+                    src={preview(d.slug)}
                     alt={`${d.name}, ${d.kind.toLowerCase()} : aperçu du site`}
                     loading="lazy"
                     decoding="async"

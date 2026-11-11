@@ -21,3 +21,7 @@ export const DEMOS: DemoMeta[] = [
   { slug: 'festival', name: 'Pulse', kind: 'Festival électronique', tagline: 'Trois nuits. Zéro silence.', colors: ['#050008', '#ff2fb4'] },
   { slug: 'school', name: 'Les Cèdres', kind: 'École privée', tagline: 'Apprendre à penser.', colors: ['#fbf8f1', '#12372a'] },
 ]
+
+/** A demo's preview picture. The version makes browsers fetch a fresh copy whenever the previews are retaken. */
+export const PREVIEW_VERSION = 4
+export const preview = (slug: string) => `/demos/${slug}.jpg?v=${PREVIEW_VERSION}`
