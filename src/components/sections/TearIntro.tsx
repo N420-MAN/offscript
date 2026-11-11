@@ -110,6 +110,25 @@ export default function TearIntro({ onDone }: Props) {
         },
       })
 
+      // The 3D scene builds and compiles its shaders while this page is on screen, which blocks the main thread for a
+      // moment. Typing through that freeze made the text hang and then jump. So the page waits with its caret blinking
+      // (a compositor animation, unaffected by the freeze) until the scene is ready, then types; the tear waits again if needed.
+      const waitIds: number[] = []
+      const waitForScene = (limit: number) => () => {
+        if (stage.sceneReady) return
+        tl.pause()
+        const t0 = performance.now()
+        const id = window.setInterval(() => {
+          if (!stage.sceneReady && performance.now() - t0 < limit) return
+          window.clearInterval(id)
+          tl.play()
+        }, 40)
+        waitIds.push(id)
+      }
+      const first = el.querySelector<HTMLElement>('[data-key="0"]')
+      first?.classList.add('caret')
+      tl.call(waitForScene(3000), [], 0.05)
+
       // 1. Typing
       LINES.forEach((line, i) => {
         const counter = { n: 0 }
@@ -128,8 +147,10 @@ export default function TearIntro({ onDone }: Props) {
         )
       })
 
-      // 2. Crack, then split
+      // 2. Crack, then split. The tear waits here (4 s at most) until the 3D scene has compiled and drawn: opening onto a
+      // scene that is still loading is what made the cut stutter or open onto nothing.
       tl.addLabel('crack', '>+0.05')
+      tl.call(waitForScene(2500), [], 'crack')
       tl.set(crack, { opacity: 1 }, 'crack')
       tl.fromTo(crack, { strokeDashoffset: crackLen }, { strokeDashoffset: 0, duration: 0.35, ease: 'power2.in', immediateRender: false }, 'crack')
       tl.addLabel('split', '>')
@@ -160,13 +181,15 @@ export default function TearIntro({ onDone }: Props) {
       const skip = () => {
         // Before the tear: jump straight to it. After: just run the remainder faster.
         if (tl.time() < tl.labels.split) tl.seek('split')
-        tl.timeScale(2)
+        waitIds.forEach((id) => window.clearInterval(id))
+        tl.timeScale(2).play()
       }
       const events = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const
       events.forEach((e) => window.addEventListener(e, skip, { once: true, passive: true }))
 
       return () => {
         gsap.ticker.lagSmoothing(500, 33)
+        waitIds.forEach((id) => window.clearInterval(id))
         events.forEach((e) => window.removeEventListener(e, skip))
         document.documentElement.style.overflow = ''
       }

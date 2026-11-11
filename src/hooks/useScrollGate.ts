@@ -50,7 +50,24 @@ export function useScrollGate(ref: RefObject<HTMLElement | null>) {
       lastY = window.scrollY
     }
     const onWheel = (e: WheelEvent) => {
-      if (!held || stage.paused) return
+      if (stage.paused) return
+      if (!held) {
+        // Stop a wheel or trackpad scroll exactly at the windows *before* the browser moves the page, instead of letting it
+        // overshoot into the next section and yanking it back (that yank was the visible jump at the end of the hero).
+        if (!armed || bypass() || e.deltaY <= 0) return
+        const y = window.scrollY
+        const dy = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY
+        if (y < gateY - 1 && y + dy > gateY) {
+          e.preventDefault()
+          window.scrollTo(0, gateY)
+          arrivedAt = performance.now()
+          lastWheel = e.timeStamp || arrivedAt
+          setHeld(true)
+          armed = false
+          lastY = gateY
+        }
+        return
+      }
       if (e.deltaY > 0 && !settled()) {
         e.preventDefault() // the scene is still travelling at its own pace: let it arrive before scrolling on
         return

@@ -134,7 +134,7 @@ export default function FloatingWindows() {
       const el = els.current[i]
       if (!el) return
       const s = rnd(0.82, 1.1)
-      bodies.push({ x: 0, y: 0, vx: 0, vy: 0, w: 220, h: 160, s, sc: 0, en: 0, delay: 0, base: 0, drift: Math.random() < 0.6 ? rnd(2.5, 6.5) * (Math.random() < 0.5 ? -1 : 1) : 0, wx: rnd(0.07, 0.15), wy: rnd(0.06, 0.13), Ax: rnd(10, 22), Ay: rnd(22, 42), ph: rnd(0, 6.28), ox: 0.5, oy: 0.5, sa: 0, sx: 0, sy: 0, dim: el.querySelector<HTMLElement>('[data-dim]'), lastBlur: 'none', lastShadow: '', hx: 0, hy: 0, calm: 0, angle: 0, spin: 0, home: rnd(-30, 30), rx: 0, ry: 0, fade: 0, ax: 0.5, ay: 0.5, free: false, px: 0, py: 0, drag: false, el })
+      bodies.push({ x: 0, y: 0, vx: 0, vy: 0, w: 220, h: 160, s, sc: 0, en: 0, delay: 0, base: 0, drift: Math.random() < 0.6 ? rnd(2.5, 6.5) * (Math.random() < 0.5 ? -1 : 1) : 0, wx: rnd(0.05, 0.1), wy: rnd(0.04, 0.09), Ax: rnd(3, 6), Ay: rnd(5, 10), ph: rnd(0, 6.28), ox: 0.5, oy: 0.5, sa: 0, sx: 0, sy: 0, dim: el.querySelector<HTMLElement>('[data-dim]'), lastBlur: 'none', lastShadow: '', hx: 0, hy: 0, calm: 0, angle: 0, spin: 0, home: rnd(-7, 7), rx: 0, ry: 0, fade: 0, ax: 0.5, ay: 0.5, free: false, px: 0, py: 0, drag: false, el })
       el.style.zIndex = String(Math.round(s * 10))
     })
     layout()
@@ -159,9 +159,9 @@ export default function FloatingWindows() {
         } else {
           b.ox = rnd(0.08, 0.92)
           b.oy = rnd(0.14, 0.88)
-          b.sa = rnd(-260, 260)
-          b.sx = rnd(-85, 85)
-          b.sy = rnd(-85, 85)
+          b.sa = rnd(-140, 140)
+          b.sx = rnd(-45, 45)
+          b.sy = rnd(-45, 45)
         }
       })
       relaxHomes()
@@ -412,7 +412,7 @@ export default function FloatingWindows() {
       }
       const t = now / 1000
 
-      if (frame++ % 6 === 0) {
+      if (frame++ % (p < 0.98 ? 6 : 60) === 0) {
         textRect = measureText() ?? textRect
       }
 
@@ -459,8 +459,8 @@ export default function FloatingWindows() {
           }
           if (!b.free) {
             // float around its place on slow, overlapping swells; a critically damped spring keeps it smooth, never jittery
-            const wx = Math.sin(t * 0.13 + b.ph) * 18 + Math.sin(t * 0.07 + b.ph * 2.3) * 10
-            const wy = Math.cos(t * 0.11 + b.ph * 1.4) * 14 + Math.sin(t * 0.06 + b.ph) * 8
+            const wx = Math.sin(t * 0.11 + b.ph) * 9 + Math.sin(t * 0.06 + b.ph * 2.3) * 5
+            const wy = Math.cos(t * 0.09 + b.ph * 1.4) * 7 + Math.sin(t * 0.05 + b.ph) * 4
             const k = 2.2
             const c = 2 * Math.sqrt(k)
             b.vx += ((b.ax * W + wx - b.x) * k - b.vx * c) * dt
@@ -493,7 +493,7 @@ export default function FloatingWindows() {
           // self-rotation: a slowly drifting rest angle followed by a damped spring; squares up when held or hovered
           b.base += b.drift * dt * (1 - b.calm)
           const rest = Math.round(b.base / 360) * 360 + b.home * 0.3
-          const target = (b.home + Math.sin(b.ph + t * (0.05 + Math.abs(b.drift) * 0.012)) * 26 + Math.sin(t * 0.2 + i * 2.1) * 6) * (1 - b.calm) + rest * b.calm
+          const target = (b.home + Math.sin(b.ph + t * (0.04 + Math.abs(b.drift) * 0.006)) * 5 + Math.sin(t * 0.15 + i * 2.1) * 1.5) * (1 - b.calm) + rest * b.calm
           b.spin += (target - b.angle) * 6 * dt
           b.spin *= sd
           b.angle += b.spin * dt
@@ -581,10 +581,10 @@ export default function FloatingWindows() {
         // each window tumbles on its own: yaw and pitch swing slowly and out of step, so it rarely faces forward
         const amp = 1 - b.calm
         const ee = b.en * b.en * (3 - 2 * b.en)
-        const yaw = (Math.sin(t * b.wy + b.ph) * b.Ay + Math.max(-14, Math.min(14, b.vx * 0.012))) * amp + (1 - ee) * b.sy
-        const pit = (Math.sin(t * b.wx + b.ph * 1.7) * b.Ax + Math.max(-14, Math.min(14, -b.vy * 0.012))) * amp + (1 - ee) * b.sx
-        const hoverYaw = hovered === i ? b.hx * 14 * b.calm : 0
-        const hoverPit = hovered === i ? -b.hy * 10 * b.calm : 0
+        const yaw = (Math.sin(t * b.wy + b.ph) * b.Ay + Math.max(-8, Math.min(8, b.vx * 0.008))) * amp + (1 - ee) * b.sy
+        const pit = (Math.sin(t * b.wx + b.ph * 1.7) * b.Ax + Math.max(-8, Math.min(8, -b.vy * 0.008))) * amp + (1 - ee) * b.sx
+        const hoverYaw = hovered === i ? b.hx * 6 * b.calm : 0
+        const hoverPit = hovered === i ? -b.hy * 4 * b.calm : 0
         b.ry += (yaw + hoverYaw - b.ry) * (b.calm > 0.2 || b.en < 1 ? Math.min(1, dt * 6) : k)
         b.rx += (pit + hoverPit - b.rx) * (b.calm > 0.2 || b.en < 1 ? Math.min(1, dt * 6) : k)
 
@@ -611,8 +611,9 @@ export default function FloatingWindows() {
         }
         b.el.dataset.lit = lit ? 'true' : 'false'
         const att = (!interacted || forceAttract) && attractIdx === i && now < attractUntil
-        const edge = lit ? '0 0 0 2px #ff4b1f, ' : att ? `0 0 0 2px rgba(255,75,31,${(0.45 + 0.4 * Math.sin(now / 130)).toFixed(2)}), ` : ''
-        const shadow = edge + (b.en < 1 ? `0 0 ${Math.round(70 * (1 - b.en))}px rgba(255,75,31,${(0.7 * (1 - b.en)).toFixed(2)}), 0 14px 34px -12px rgba(0,0,0,.6)` : b.drag ? '0 34px 70px -10px rgba(0,0,0,.7)' : '0 14px 34px -12px rgba(0,0,0,.6)')
+        const edge = lit ? '0 0 0 2px #ff4b1f, ' : att ? `0 0 0 2px rgba(255,75,31,${(0.45 + 0.4 * Math.round(Math.sin(now / 260) * 4) / 4).toFixed(2)}), ` : ''
+        const qe = Math.round(b.en * 8) / 8
+        const shadow = edge + (qe < 1 ? `0 0 ${Math.round(50 * (1 - qe))}px rgba(255,75,31,${(0.6 * (1 - qe)).toFixed(2)}), 0 14px 34px -12px rgba(0,0,0,.6)` : b.drag ? '0 34px 70px -10px rgba(0,0,0,.7)' : '0 14px 34px -12px rgba(0,0,0,.6)')
         if (shadow !== b.lastShadow) {
           b.el.style.boxShadow = shadow
           b.lastShadow = shadow
@@ -627,6 +628,24 @@ export default function FloatingWindows() {
       }
     }
     raf = requestAnimationFrame(tick)
+
+    // Decode the ten previews while the hero is still idle: decoding them at the moment the windows first appear, in the
+    // middle of the break, was the stall that made the first pass through the transition stutter.
+    let warmId = 0
+    const warm = () => {
+      if (!stage.sceneReady) {
+        warmId = window.setTimeout(warm, 300)
+        return
+      }
+      const go = () =>
+        bodies.forEach((b) => {
+          const im = b.el.querySelector('img')
+          if (im) void im.decode().catch(() => {})
+        })
+      if ('requestIdleCallback' in window) (window as Window).requestIdleCallback(go, { timeout: 1500 })
+      else go()
+    }
+    warmId = window.setTimeout(warm, 600)
 
     const onReturn = () => {
       diving = false
@@ -651,6 +670,7 @@ export default function FloatingWindows() {
     window.addEventListener('resize', onResize)
     return () => {
       cancelAnimationFrame(raf)
+      window.clearTimeout(warmId)
       window.removeEventListener('resize', onResize)
       window.removeEventListener('offscript:return', onReturn)
       cleanups.forEach((f) => f())

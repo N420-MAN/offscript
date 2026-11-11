@@ -19,7 +19,7 @@ export function useStageScroll(ref: RefObject<HTMLElement | null>) {
 
       // The journey has a top speed: however fast the visitor scrolls, the scene travels at most MAX_SPEED (share of the whole
       // journey per second), easing in and out, so the transition is always seen at its intended pace.
-      const MAX_SPEED = 0.26
+      const MAX_SPEED = 0.34
       let target = 0
       let cur = 0
       let vel = 0

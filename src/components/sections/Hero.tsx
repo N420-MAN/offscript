@@ -29,8 +29,16 @@ export function SiteHeader() {
       setCurrent(cur)
     }
     on()
-    window.addEventListener('scroll', on, { passive: true })
-    return () => window.removeEventListener('scroll', on)
+    // measured at most once per frame: scroll events can fire several times a frame, each forcing a layout read
+    let queued = 0
+    const onScroll = () => {
+      if (!queued) queued = requestAnimationFrame(() => ((queued = 0), on()))
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(queued)
+      window.removeEventListener('scroll', onScroll)
+    }
   }, [])
   useEffect(() => {
     if (!open) return
@@ -142,13 +150,13 @@ export function HeroLayer({ layer, variant = 'script' }: { layer: 'back' | 'fron
         <div {...(front ? { 'data-hero-sub': '' } : {})} className={`mt-8 flex flex-wrap items-center gap-3 ${hide(front)}`}>
           <a
             href="#expertises"
-            className="label pointer-events-auto rounded-full bg-bone px-6 py-3.5 text-void transition-colors hover:bg-signal"
+            className="btn label pointer-events-auto rounded-full bg-bone px-6 py-3.5 text-void hover:bg-signal"
           >
             Découvrir notre univers
           </a>
           <a
             href="#contact"
-            className="label pointer-events-auto rounded-full border border-bone/30 px-6 py-3.5 transition-colors hover:border-signal hover:text-signal"
+            className="btn label pointer-events-auto rounded-full border border-bone/30 px-6 py-3.5 hover:border-signal hover:text-signal"
           >
             Parlons de votre projet
           </a>

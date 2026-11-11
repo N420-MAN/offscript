@@ -1,8 +1,10 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react'
 import { HeroLayer, SiteHeader } from './components/sections/Hero'
 import FloatingWindows from './components/ui/FloatingWindows'
 import Statement from './components/sections/Statement'
 import Services from './components/sections/Services'
+import Work from './components/sections/Work'
+import Band from './components/sections/Band'
 import Philosophy from './components/sections/Philosophy'
 import Process from './components/sections/Process'
 import Contact from './components/sections/Contact'
@@ -13,15 +15,26 @@ import { useStageScroll } from './hooks/useStageScroll'
 import { useScrollGate } from './hooks/useScrollGate'
 import { stage } from './state/stage'
 import { installSmoothAnchors } from './lib/smoothScroll'
+import gsap from 'gsap'
 
 const HeroCanvas = lazy(() => import('./scenes/hero/HeroCanvas'))
 
+/** Everything below the hero. Memoised: the intro ending (a state change in App) must not re-render the whole page mid-glide. */
+const BelowFold = memo(function BelowFold() {
+  return (
+    <>
+      <Services />
+      <Work />
+      <Band />
+      <Philosophy />
+      <Process />
+      <Contact />
+    </>
+  )
+})
+
 function shouldPlayIntro(): boolean {
   if (window.location.hash.startsWith('#/demo/')) return false
-  try {
-  } catch {
-    /* ignore */
-  }
   if (prefersReducedMotion()) return false
   const param = new URLSearchParams(window.location.search).get('intro')
   if (param === '0') return false
@@ -38,9 +51,25 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
   const [intro, setIntro] = useState(shouldPlayIntro)
   const [ready, setReady] = useState(false)
   const webgl = hasWebGL()
+  if (!webgl) stage.sceneReady = true // nothing to wait for: the intro tears straight onto the static backdrop
   useEffect(() => {
     if (!intro) stage.reveal = 1
   }, [intro])
+
+  // Without the opening animation (a returning visitor, ?intro=0) the headline still arrives: each line rises out of
+  // its own mask, then the copy and buttons follow. Played once, on load only.
+  const playedIntro = useRef(intro)
+  useEffect(() => {
+    if (playedIntro.current || prefersReducedMotion() || window.location.hash.startsWith('#/demo/') || window.scrollY > 40) return
+    const lines = document.querySelectorAll('[data-hero-line]')
+    const subs = document.querySelectorAll('[data-hero-sub]')
+    const tl = gsap.timeline({ delay: 0.15 })
+    tl.from(lines, { yPercent: 108, duration: 1.05, ease: 'expo.out', stagger: 0.09 }, 0)
+    tl.from(subs, { y: 24, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.1 }, 0.45)
+    return () => {
+      tl.progress(1).kill()
+    }
+  }, [])
 
   useStageScroll(stageRef)
   useScrollGate(stageRef)
@@ -49,10 +78,10 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
   // The hero only works while it is on screen and no demo is open on top of it.
   const [inView, setInView] = useState(true)
   const [shown, setShown] = useState(false)
-  // Mount the heavy 3D scene a moment after first paint, while the intro types, instead of competing with it.
+  // Mount the heavy 3D scene right after first paint, so it loads and compiles while the intro types (the tear waits for it).
   useEffect(() => {
     if (hidden || shown) return
-    const id = window.setTimeout(() => setShown(true), intro ? 900 : 150)
+    const id = window.setTimeout(() => setShown(true), intro ? 120 : 150)
     return () => window.clearTimeout(id)
   }, [hidden, shown, intro])
   useEffect(() => {
@@ -102,10 +131,7 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
           <FloatingWindows />
         </div>
       </div>
-      <Services />
-      <Philosophy />
-      <Process />
-      <Contact />
+      <BelowFold />
       {intro && <TearIntro onDone={() => setIntro(false)} />}
     </main>
     </>

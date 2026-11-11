@@ -9,13 +9,13 @@ export const STYLE_OF: Record<string, Reveal | 'rip'> = {
   medical: 'bloom', // soft ink bloom
   hotel: 'arches', // arches rising
   residence: 'floors', // floor slabs sliding apart
-  finance: 'bars', // a bar chart collapsing
+  restaurant: 'bars', // a menu's columns sliding away
   shop: 'rip', // paper tearing
   ev: 'charge', // a charge sweeping across
   ai: 'dots', // pixels dissolving into nodes
   atelier: 'doors', // clean sliding doors
   festival: 'pulse', // beat-synced pulses
-  watch: 'dial', // a clock hand sweeping
+  school: 'dial', // a clock hand sweeping: the school day
 }
 
 type Origin = { x: number; y: number }

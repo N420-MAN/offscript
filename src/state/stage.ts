@@ -20,6 +20,8 @@ export const stage = {
   snap: false,
   /** Minimum ms between rendered frames of the hero (0 = every frame); raised automatically on slow devices. */
   interval: 0,
+  /** True once the 3D scene has compiled its shaders and drawn (or when there is no 3D at all): the intro waits for it. */
+  sceneReady: false,
   /** Set by the canvas so non-animated frames (reduced motion) can be redrawn. */
   invalidate: () => {},
 }

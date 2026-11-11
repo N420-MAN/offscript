@@ -9,13 +9,13 @@ const pages: Record<DemoSlug, React.LazyExoticComponent<() => React.JSX.Element>
   medical: lazy(() => import('./Medical')),
   hotel: lazy(() => import('./Hotel')),
   residence: lazy(() => import('./Residence')),
-  finance: lazy(() => import('./Finance')),
+  restaurant: lazy(() => import('./Restaurant')),
   shop: lazy(() => import('./Shop')),
   ev: lazy(() => import('./Volta')),
   ai: lazy(() => import('./Synapse')),
   atelier: lazy(() => import('./Atelier')),
   festival: lazy(() => import('./Festival')),
-  watch: lazy(() => import('./Watch')),
+  school: lazy(() => import('./School')),
 }
 
 export function isDemoSlug(s: string): s is DemoSlug {
@@ -29,8 +29,8 @@ let closing = false
  * same jagged line the window tore along when it opened; the halves swing away with a spray of shards, revealing the
  * home page exactly where the visitor left it, with the window they came from pulsing.
  */
-function leave(e: React.MouseEvent, slug: DemoSlug, shell: HTMLElement | null) {
-  e.preventDefault()
+function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTMLElement | null) {
+  e?.preventDefault()
   if (closing) return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     window.location.hash = '#/'
@@ -140,7 +140,42 @@ function leave(e: React.MouseEvent, slug: DemoSlug, shell: HTMLElement | null) {
   )
 }
 
-/** Wraps a demo site with the one persistent control that returns the visitor to the studio. */
+/** Steps sideways to a neighbouring demo: its preview washes over the page, the new page mounts beneath, the wash lifts. */
+function step(to: DemoSlug) {
+  if (closing) return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.location.hash = `#/demo/${to}`
+    return
+  }
+  closing = true
+  const meta = DEMOS.find((d) => d.slug === to)!
+  const cover = document.createElement('div')
+  cover.style.cssText = `position:fixed;inset:0;z-index:9999;pointer-events:none;background:${meta.colors[0]} url(/demos/${to}.jpg) center/cover no-repeat`
+  document.body.appendChild(cover)
+  gsap.fromTo(cover, { clipPath: 'inset(0 0 0 100%)' }, {
+    clipPath: 'inset(0 0 0 0%)',
+    duration: 0.55,
+    ease: 'expo.inOut',
+    onComplete: () => {
+      window.location.hash = `#/demo/${to}`
+      window.setTimeout(() => {
+        gsap.to(cover, {
+          clipPath: 'inset(0 100% 0 0)',
+          duration: 0.6,
+          ease: 'expo.inOut',
+          onComplete: () => {
+            cover.remove()
+            closing = false
+          },
+        })
+      }, 260)
+    },
+  })
+}
+
+const pill = 'flex items-center gap-2 rounded-full bg-black/80 text-[0.7rem] font-medium uppercase tracking-[0.14em] text-white backdrop-blur'
+
+/** Wraps a demo site with its persistent controls: back to the studio, and the neighbouring demos. */
 export default function DemoShell({ slug }: { slug: DemoSlug }) {
   const Page = pages[slug]
   const meta = DEMOS.find((d) => d.slug === slug)!
@@ -151,24 +186,64 @@ export default function DemoShell({ slug }: { slug: DemoSlug }) {
     const homeTriggers = new Set(ScrollTrigger.getAll())
     window.scrollTo(0, 0)
     document.title = `${meta.name} — ${meta.kind}`
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) leave(e, slug, shell.current)
+    }
+    window.addEventListener('keydown', onKey)
     return () => {
+      window.removeEventListener('keydown', onKey)
       ScrollTrigger.getAll().forEach((t) => {
         if (!homeTriggers.has(t)) t.kill()
       })
       document.title = 'OFFSCRIPT'
     }
-  }, [meta])
+  }, [meta, slug])
+
+  const at = DEMOS.findIndex((d) => d.slug === slug)
+  const prev = DEMOS[(at + DEMOS.length - 1) % DEMOS.length]
+  const next = DEMOS[(at + 1) % DEMOS.length]
+  // ?clean hides the studio's controls, for taking the preview pictures of each demo
+  const clean = new URLSearchParams(window.location.search).has('clean')
 
   return (
-    <div ref={shell}>
+    <div ref={shell} className={clean ? '[&>a.fixed]:hidden [&>nav.fixed]:hidden' : undefined}>
       <a
         href="#/"
         onClick={(e) => leave(e, slug, shell.current)}
-        className="fixed bottom-4 left-4 z-[100] flex items-center gap-2 rounded-full bg-black/80 px-4 py-2.5 text-[0.7rem] font-medium uppercase tracking-[0.14em] text-white backdrop-blur transition-transform hover:scale-105"
+        aria-label="Fermer la démo et revenir au studio OFFSCRIPT"
+        title="Retour au studio (Échap)"
+        className={`btn fixed bottom-4 left-4 z-[100] min-h-11 px-4 py-2.5 ${pill}`}
         style={{ fontFamily: '"DM Mono", monospace' }}
       >
         <span aria-hidden>←</span> OFF/SCRIPT
       </a>
+      <nav aria-label="Autres démos" className={`fixed bottom-4 right-4 z-[100] p-1 ${pill}`} style={{ fontFamily: '"DM Mono", monospace' }}>
+        <a
+          href={`#/demo/${prev.slug}`}
+          onClick={(e) => {
+            e.preventDefault()
+            step(prev.slug)
+          }}
+          aria-label={`Démo précédente : ${prev.name}`}
+          className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-white/15"
+        >
+          <span aria-hidden>←</span>
+        </a>
+        <span className="px-1 tabular-nums" aria-label={`Démo ${at + 1} sur ${DEMOS.length}`}>
+          {String(at + 1).padStart(2, '0')}<span className="text-white/45"> / {DEMOS.length}</span>
+        </span>
+        <a
+          href={`#/demo/${next.slug}`}
+          onClick={(e) => {
+            e.preventDefault()
+            step(next.slug)
+          }}
+          aria-label={`Démo suivante : ${next.name}`}
+          className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-white/15"
+        >
+          <span aria-hidden>→</span>
+        </a>
+      </nav>
       <Suspense fallback={<div className="grid h-screen place-items-center bg-black text-white/50">…</div>}>
         <Page />
       </Suspense>

@@ -23,19 +23,31 @@ export function installSmoothAnchors(): () => void {
     e.preventDefault()
     window.setTimeout(() => {
       const y = Math.max(0, target.getBoundingClientRect().top + window.scrollY)
+      // stop any glide already running *first*: stop() clears the gate bypass, and calling it after setting the bypass
+      // (as before) left the glide unprotected, so the scroll gate caught it at the demo windows and it died there
+      stop()
       stage.gateBypass = Infinity
       if (prefersReducedMotion()) {
         window.scrollTo(0, y)
         stage.gateBypass = performance.now() + 300
         return
       }
-      stop()
       const dist = Math.abs(y - window.scrollY)
       const duration = Math.min(8, Math.max(2, dist / 520))
-      tween = gsap.to(window, { scrollTo: { y, autoKill: true }, duration, ease: 'power2.inOut', overwrite: true, onComplete: () => {
+      const release = () => {
+        stage.gateBypass = performance.now() + 300
+      }
+      tween = gsap.to(window, {
+        scrollTo: { y, autoKill: true },
+        duration,
+        ease: 'power2.inOut',
+        overwrite: true,
+        onComplete: () => {
           history.replaceState(null, '', href)
-          stage.gateBypass = performance.now() + 300
+          release()
         },
+        // the visitor took over (keys, scrollbar): hand the gate back instead of leaving it switched off for good
+        onInterrupt: release,
       })
     }, 60)
   }

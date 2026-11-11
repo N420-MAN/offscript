@@ -22,6 +22,21 @@ function preloadCriticalFonts(): Plugin {
 }
 
 // The 3D scene is code-split via React.lazy in App.tsx, so first paint does not wait for three.js.
+// React and GSAP change far less often than the site's own code: their own chunks stay cached across deploys.
 export default defineConfig({
   plugins: [react(), tailwindcss(), preloadCriticalFonts()],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 2 },
+            { name: 'gsap', test: /node_modules[\\/](gsap|@gsap)[\\/]/, priority: 1 },
+            // only ever reached through the lazy HeroCanvas import, so it still loads after first paint
+            { name: 'three', test: /node_modules[\\/](three|@react-three|postprocessing|maath|its-fine|zustand|suspend-react)[\\/]/, priority: 1 },
+          ],
+        },
+      },
+    },
+  },
 })

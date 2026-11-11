@@ -1,12 +1,15 @@
-Drop photos and videos here. Missing files simply keep the generative visual.
+Photos used by the demo sites. Replace any file with your own at the same path and the demo picks it up.
+Photos in restaurant/, school/, clinic/, riad/ and atelier/ are free-licence stand-ins from Wikimedia Commons (CC0 / CC BY / CC BY-SA / public domain);
+hotel/, residence/ and volta/ came with the original project (offscript-1); their source is not recorded here.
+authors and licences are listed in CREDITS.json and shown under "Crédits photos" in each demo's footer.
+If you replace a photo with your own, remove its line from CREDITS.json (and src/demos/credits.json).
 
-medical/treat-1.jpg … treat-4.jpg   (portrait 4:5)
-hotel/room-1.jpg … room-3.jpg        (portrait 3:4)   hotel/pool.jpg  hotel/courtyard.jpg  (landscape 16:10)
-residence/floor-1.jpg … floor-4.jpg  (landscape 16:9)
-volta/hero.mp4 (6-10 s loop, no audio)   volta/detail-1.jpg … detail-3.jpg (portrait 4:5)
-atelier/project-1.jpg … project-4.jpg    (portrait 4:5)
-pulse/hero.mp4 (6-10 s loop, no audio)   pulse/crowd-1.jpg  crowd-2.jpg
-onyx/watch-1.jpg … watch-4.jpg           (portrait 3:4)   onyx/macro.mp4 (optional)
+restaurant/   Maison Safran (restaurant)      tajine, tajine-2, couscous-legumes, couscous-tfaya, table, fire, tea, room, terrace, kitchen
+school/       Les Cèdres (école privée)        classroom, classroom-2, library, lab, robotics, robotics-2, campus-2, debate
+clinic/       Centre Aurèle (centre médical)   consult, stetho, stetho-2, dental, dentist
+riad/         Riad Zéphyr (riad)               pool, pool-2, up, ceiling, tea, hammam, rooftop-night  (+ hotel/ room photos)
+atelier/      Atelier Null (architecture)      wall, living, white, grid   (project-1..4.jpg override them if present)
+residence/    Verticale (promoteur)            floor-1..4
+volta/, pulse/   untouched demos (drop-in slots, see their code)
 
-Photos: 2400 px long edge, JPG or WebP. Video: MP4 H.264, 1280x720+, muted, under ~3 MB.
-Videos are skipped on small screens by design (mobile speed first).
+Photos: about 2000 px on the long edge, JPEG ~80 % quality. Videos: MP4 H.264, muted, under ~3 MB.

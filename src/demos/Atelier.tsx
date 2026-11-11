@@ -3,6 +3,7 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import '@fontsource-variable/inter'
 import { Slot } from './Slot'
+import AtelierBrief from './AtelierBrief'
 
 const SANS = '"Inter Variable", system-ui, sans-serif'
 const BG = '#f6f6f4'
@@ -80,20 +81,13 @@ const PROJECTS = [
   ['04', 'Cour Zéro', 'Marrakech', '2021'],
 ]
 
-/** Generative stand-ins until a real photograph is dropped in. */
-function Placeholder({ n }: { n: number }) {
-  const shapes = [
-    <rect key="a" x="30" y="20" width="60" height="120" fill={INK} />,
-    <path key="b" d="M20 140 L100 140 L100 40 L20 100 Z" fill={INK} />,
-    <g key="c" fill={INK}>{Array.from({ length: 9 }, (_, i) => <rect key={i} x={20 + i * 8} y={140 - i * 14} width="8" height={i * 14 + 6} />)}</g>,
-    <g key="d" fill="none" stroke={INK} strokeWidth="1.4"><rect x="25" y="25" width="70" height="110" /><rect x="40" y="45" width="40" height="70" /><rect x="53" y="65" width="14" height="30" fill={INK} /></g>,
-  ]
-  return (
-    <div className="absolute inset-0 grid place-items-center" style={{ background: n % 2 ? '#e9e9e5' : '#dcdcd7' }}>
-      <svg viewBox="0 0 120 160" className="h-2/3">{shapes[n - 1]}</svg>
-    </div>
-  )
-}
+/** Stand-in photographs (details, not other architects' buildings) until the studio's own project photos are dropped in. */
+const PROJECT_PHOTOS: [string, string][] = [
+  ['wall.jpg', 'Un mur enduit à la chaux, une corde qui le traverse en diagonale'],
+  ['living.jpg', 'Un séjour en bois ouvert sur l’océan, banquettes basses le long des baies'],
+  ['white.jpg', 'Des lames verticales blanches qui découpent la lumière'],
+  ['grid.jpg', 'Un plafond en résille de métal et de verre, vu d’en dessous'],
+]
 
 export default function Atelier() {
   const root = useRef<HTMLDivElement>(null)
@@ -140,7 +134,9 @@ export default function Atelier() {
         <div data-reveal className="relative aspect-[4/5] w-full overflow-hidden md:sticky md:top-24 md:h-[70vh] md:w-auto md:aspect-auto">
           {PROJECTS.map((_, i) => (
             <div key={i} className="absolute inset-0 transition-opacity duration-700" style={{ opacity: active === i ? 1 : 0 }}>
-              <Slot src={`atelier/project-${i + 1}.jpg`} className="absolute inset-0 h-full w-full object-cover grayscale"><Placeholder n={i + 1} /></Slot>
+              <Slot src={`atelier/project-${i + 1}.jpg`} className="absolute inset-0 h-full w-full object-cover grayscale">
+                <img src={`/media/atelier/${PROJECT_PHOTOS[i][0]}`} alt={PROJECT_PHOTOS[i][1]} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover grayscale" />
+              </Slot>
             </div>
           ))}
         </div>
@@ -155,14 +151,7 @@ export default function Atelier() {
         ))}
       </section>
 
-      <section className="px-6 pb-28 pt-10 md:px-12">
-        <a data-reveal href="#" onClick={(e) => e.preventDefault()} className="group inline-block text-[clamp(2.4rem,8vw,7rem)] tracking-[-0.04em]">
-          Écrire à l’atelier
-          <span className="ml-4 inline-block transition-transform duration-500 group-hover:translate-x-4">→</span>
-          <span className="block h-px origin-left scale-x-0 transition-transform duration-700 group-hover:scale-x-100" style={{ background: INK }} />
-        </a>
-        <p className="mt-24 text-xs" style={{ color: GREY }}>© Atelier Null — démonstration</p>
-      </section>
+      <AtelierBrief />
     </div>
   )
 }

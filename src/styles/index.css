@@ -16,6 +16,9 @@
 
 :root {
   color-scheme: dark;
+  /* The intro locks scrolling; without a reserved gutter the scrollbar popped in as the page tore open, shifting the whole
+     layout sideways and resizing the 3D canvas (a visible jump and a stall at the end of the cut). */
+  scrollbar-gutter: stable;
 }
 
 
@@ -66,6 +69,63 @@ body {
   font-weight: 400;
   text-transform: none;
   letter-spacing: -0.01em;
+}
+
+/* Pointer answers: a linked card lifts, its title underlines itself, buttons step up on hover and press on click. */
+.work-card {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.work-card:hover,
+.work-card:focus-visible {
+  transform: translateY(-2px);
+}
+.link-draw {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 0.06em no-repeat;
+  transition: background-size 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.group:hover .link-draw,
+.group:focus-visible .link-draw {
+  background-size: 100% 0.06em;
+}
+.btn {
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.25s,
+    border-color 0.25s,
+    color 0.25s;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-card,
+  .btn,
+  .link-draw {
+    transition: none;
+  }
+  .work-card:hover,
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* The vermilion band: a slow slide that stops on hover, on pause, and under reduced motion. */
+.band-track {
+  animation: marquee 48s linear infinite;
+}
+.band:hover .band-track,
+.band[data-paused] .band-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .band-track {
+    animation: none;
+  }
 }
 
 .fade-in {

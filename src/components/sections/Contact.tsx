@@ -109,14 +109,14 @@ function ContactForm() {
       <Field id="f-phone" label="Téléphone" optional error={errors.phone}><input {...aria('phone')} type="tel" inputMode="tel" value={v.phone} onChange={set('phone')} autoComplete="tel" className={input} /></Field>
       <Field id="f-type" label="Type de projet" error={errors.type}>
         <select {...aria('type')} value={v.type} onChange={set('type')} className={`${input} cursor-pointer`}>
-          <option value="" className="bg-void">Sélectionnez…</option>
-          {PROJECT_TYPES.map((t) => <option key={t} value={t} className="bg-void">{t}</option>)}
+          <option value="" className="bg-graphite">Sélectionnez…</option>
+          {PROJECT_TYPES.map((t) => <option key={t} value={t} className="bg-graphite">{t}</option>)}
         </select>
       </Field>
       <Field id="f-budget" label="Budget indicatif" optional error={errors.budget}>
         <select {...aria('budget')} value={v.budget} onChange={set('budget')} className={`${input} cursor-pointer`}>
-          <option value="" className="bg-void">Sélectionnez…</option>
-          {BUDGETS.map((t) => <option key={t} value={t} className="bg-void">{t}</option>)}
+          <option value="" className="bg-graphite">Sélectionnez…</option>
+          {BUDGETS.map((t) => <option key={t} value={t} className="bg-graphite">{t}</option>)}
         </select>
       </Field>
       <div className="md:col-span-2">
@@ -135,7 +135,7 @@ function ContactForm() {
         <button
           type="submit"
           disabled={status === 'sending'}
-          className="label mt-2 rounded-full bg-bone px-8 py-4 text-void transition-colors hover:bg-signal focus-visible:bg-signal disabled:opacity-60"
+          className="btn label mt-2 rounded-full bg-bone px-8 py-4 text-void hover:bg-signal focus-visible:bg-signal disabled:opacity-60"
         >
           {status === 'sending' ? 'Envoi en cours…' : 'Envoyer ma demande'}
         </button>
@@ -153,6 +153,14 @@ function ContactForm() {
     </form>
   )
 }
+
+const FOOT_NAV = [
+  ['Expertises', '#expertises'],
+  ['Projets', '#travaux'],
+  ['Studio', '#studio'],
+  ['Méthode', '#process'],
+  ['Contact', '#formulaire'],
+] as const
 
 function Social({ label, href }: { label: string; href: string }) {
   return href ? (
@@ -182,9 +190,10 @@ export default function Contact() {
 
   return (
     <section ref={root} id="contact" aria-labelledby="contact-title" className="relative overflow-hidden bg-void px-5 pt-32 md:px-10 md:pt-48">
-      <div data-cta>
-        <p className="label mb-6 text-signal">05 — Contact</p>
-        <h2 id="contact-title" className="display text-[clamp(3rem,12vw,11.5rem)]" aria-label="Ready to break the script ?">
+      <div data-cta className="grid gap-10 lg:grid-cols-12 lg:items-end">
+        <div className="lg:col-span-8">
+        <p className="label mb-6 text-signal">06 — Contact</p>
+        <h2 id="contact-title" className="display text-[clamp(3rem,10vw,9.6rem)]" aria-label="Ready to break the script ?">
           <span className="block overflow-hidden pb-[0.04em]"><span data-c-line className="block">Ready to</span></span>
           <span className="block overflow-hidden pb-[0.04em]"><span data-c-line className="block">break the</span></span>
           <span className="block overflow-hidden pb-[0.04em]">
@@ -195,37 +204,71 @@ export default function Contact() {
             </span>
           </span>
         </h2>
-        <p data-c-sub className="mt-10 max-w-xl text-lg leading-relaxed text-bone/80">
-          Votre prochain projet mérite une expérience digitale à la hauteur de vos ambitions.
-        </p>
-        <a data-c-sub href="#formulaire" className="label mt-8 inline-block rounded-full bg-signal px-8 py-4 text-void transition-colors hover:bg-bone">
-          Parlons de votre projet
-        </a>
+        </div>
+        <div className="lg:col-span-4 lg:pb-4">
+          <p data-c-sub className="max-w-md text-lg leading-relaxed text-bone/80">
+            Votre prochain projet mérite une expérience digitale à la hauteur de vos ambitions.
+          </p>
+          <a data-c-sub href="#formulaire" className="btn label mt-8 inline-block rounded-full bg-signal px-8 py-4 text-void hover:bg-bone">
+            Parlons de votre projet
+          </a>
+        </div>
       </div>
 
-      <div id="formulaire" data-form-in className="mt-28 grid gap-14 scroll-mt-10 border-t border-bone/15 pt-14 md:mt-40 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] md:gap-20 md:pt-20">
+      <div id="formulaire" data-form-in className="mt-24 grid scroll-mt-24 gap-12 rounded-[28px] bg-graphite p-6 sm:p-10 md:mt-36 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] md:gap-20 md:p-16">
         <div>
           <h3 className="display text-[clamp(2rem,4.6vw,4rem)]">Parlons de<br />votre projet.</h3>
           <p className="mt-6 max-w-sm leading-relaxed text-bone/70">Quelques lignes suffisent pour commencer : votre activité, ce que vous voulez construire, et pour quand.</p>
-          <ul className="label mt-10 space-y-3">
-            <li>
-              {SITE.email ? <a href={`mailto:${SITE.email}`} className="underline-offset-4 hover:text-signal hover:underline">{SITE.email}</a> : <span className="text-ash">E-mail <span className="normal-case tracking-normal opacity-70">— à confirmer</span></span>}
-            </li>
-            <li><Social label="Instagram" href={SITE.instagram} /></li>
-            <li><Social label="LinkedIn" href={SITE.linkedin} /></li>
-            <li className="text-bone/80">{SITE.city}</li>
-          </ul>
         </div>
         <ContactForm />
       </div>
 
-      <footer className="mt-32 pb-8 md:mt-48">
-        <p aria-hidden className="display select-none whitespace-nowrap text-[clamp(3.4rem,17.5vw,20rem)] text-transparent" style={{ WebkitTextStroke: '1.5px rgba(242,240,234,0.5)' }}>
-          OFF<span style={{ WebkitTextStroke: '1.5px #ff4b1f' }}>/</span>SCRIPT
+      <footer className="mt-28 pb-8 md:mt-40">
+        <div className="grid gap-10 border-t border-bone/15 pt-12 sm:grid-cols-2 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <p className="display text-[clamp(2rem,3.4vw,3rem)]">
+              On écrit la suite <span className="serif-accent text-signal" style={{ fontSize: '1.08em' }}>ensemble ?</span>
+            </p>
+          </div>
+          <nav aria-label="Pied de page" className="lg:col-span-3 lg:col-start-7">
+            <p className="label mb-4 text-ash">Navigation</p>
+            <ul className="space-y-1">
+              {FOOT_NAV.map(([label, href]) => (
+                <li key={href}>
+                  <a href={href} className="group inline-flex min-h-11 items-center text-lg text-bone/85 transition-colors hover:text-bone">
+                    <span className="link-draw">{label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="lg:col-span-3">
+            <p className="label mb-4 text-ash">Studio</p>
+            <ul className="label space-y-3 leading-relaxed">
+              <li>
+                {SITE.email ? <a href={`mailto:${SITE.email}`} className="hover:text-signal">{SITE.email}</a> : <span className="text-ash">E-mail <span className="normal-case tracking-normal opacity-70">— à confirmer</span></span>}
+              </li>
+              <li><Social label="Instagram" href={SITE.instagram} /></li>
+              <li><Social label="LinkedIn" href={SITE.linkedin} /></li>
+              <li className="text-bone/80">{SITE.city}</li>
+            </ul>
+          </div>
+        </div>
+        <p aria-hidden className="display mt-16 select-none whitespace-nowrap text-[clamp(3.4rem,17.5vw,20rem)] leading-[0.8] text-bone md:mt-24">
+          OFF<span className="text-signal">/</span>SCRIPT
         </p>
-        <div className="label mt-8 flex flex-wrap justify-between gap-4 text-ash">
+        <div className="label mt-8 flex flex-wrap items-center justify-between gap-4 text-ash">
           <span>© {new Date().getFullYear()} OFFSCRIPT. Tous droits réservés.</span>
-          <span>{SITE.city}</span>
+          <a
+            href="#contenu"
+            onClick={(e) => {
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+            }}
+            className="btn inline-flex min-h-11 items-center gap-2 rounded-full border border-bone/25 px-5 hover:border-signal hover:text-signal"
+          >
+            Haut de page <span aria-hidden>↑</span>
+          </a>
         </div>
       </footer>
     </section>

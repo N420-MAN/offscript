@@ -16,7 +16,7 @@ export function WindowCard({ demo: d, setRef }: { demo: (typeof DEMOS)[number]; 
         <i className="h-2 w-2 rounded-full bg-[#ff5f57]" />
         <i className="h-2 w-2 rounded-full bg-[#febc2e]" />
         <i className="h-2 w-2 rounded-full bg-[#28c840]" />
-        <span className="ml-2 truncate font-mono text-[0.6rem] text-white/50">{d.name.toLowerCase().replace(/\s/g, '')}.ma</span>
+        <span className="ml-2 truncate font-mono text-[0.6rem] text-white/50">{d.kind}</span>
       </div>
       <img src={`/demos/${d.slug}.jpg`} alt="" draggable={false} className="pointer-events-none block w-full" style={{ height: `calc(100% - ${BAR}px)`, objectFit: 'cover' }} />
       <div data-dim className="pointer-events-none absolute inset-0 bg-black" style={{ opacity: 0 }} />

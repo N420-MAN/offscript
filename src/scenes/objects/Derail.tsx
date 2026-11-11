@@ -68,10 +68,12 @@ void main(){
   vec2 ndc = gl_Position.xy / gl_Position.w;
   float lit = (1.0 - smoothstep(0.0, 0.36, length((ndc - uMouse) * vec2(uAsp, 1.0)))) * (1.0 - smoothstep(0.0, 0.22, uChaos));
   vLit = lit;
-  gl_PointSize = clamp(uSize * uPx * (10.0 / max(dist, 0.5)) * (1.0 + lit * 1.1), 2.2 * uPx, 46.0 * uPx);
+  gl_PointSize = clamp(uSize * uPx * (10.0 / max(dist, 0.5)) * (1.0 + lit * 1.1), 2.2 * uPx, 34.0 * uPx);
   float keep = 1.0 - smoothstep(18.0, 75.0, dist) * 0.85;
   float thin = step(aSeed.y, keep);
   vA = thin * (1.0 - smoothstep(40.0, 95.0, dist)) * smoothstep(0.4, 3.0, dist) * uDim * mix(0.6, 1.05, aSeed.y) * (1.0 + lit * 2.4);
+  // Invisible glyphs (thinned out, fogged out, or too close) are pushed off screen with no size, so the GPU never shades them.
+  if (vA < 0.004) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; }
   vHot = a * step(0.4, aSeed.z);
   float flick = floor(fract(aSeed.w * 17.0 + floor(uTime * 9.0 + aSeed.x * 9.0) * 0.37) * 63.99);
   vGlyph = mix(floor(aSeed.w * 63.99), flick, step(0.02, lit) * (1.0 - smoothstep(0.55, 0.9, lit)));
@@ -86,10 +88,11 @@ varying float vLit;
 void main(){
   vec2 cell = vec2(mod(vGlyph, 8.0), floor(vGlyph / 8.0));
   vec2 uv = (cell + vec2(gl_PointCoord.x, gl_PointCoord.y)) / 8.0;
-  float m = texture2D(uAtlas, uv).a;
+  float m = texture2D(uAtlas, uv).a * vA;
+  if (m < 0.01) discard;
   vec3 col = mix(vec3(0.74,0.82,0.98), vec3(1.0,0.3,0.12) * 1.7, vHot);
   col = mix(col, vec3(1.0,0.72,0.55) * 1.5, vLit);
-  gl_FragColor = vec4(col, m * vA);
+  gl_FragColor = vec4(col, m);
 }
 `
 
@@ -181,7 +184,7 @@ const tmpCol = new THREE.Color()
 
 export default function Derail({ small, reduced }: SceneProps) {
   const world = useRef<THREE.Group>(null)
-  const gov = useRef({ skip: 150, t: 0, n: 0, good: 0, raised: false, locked: false })
+  const gov = useRef({ skip: 20, t: 0, n: 0, good: 0, raised: false, locked: false })
   const { gl, scene, camera } = useThree()
   // Compile every shader and upload every texture now, while the intro is still typing, so the first visible
   // frame of the scene (the moment the page tears open) does not stall.
@@ -201,6 +204,8 @@ export default function Derail({ small, reduced }: SceneProps) {
       /* warming is best effort */
     }
     g.visible = was
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => (stage.sceneReady = true)))
+    return () => cancelAnimationFrame(id)
   }, [gl, scene, camera])
   const scriptRef = useRef<THREE.Points>(null)
   const panelMeshes = useRef<(THREE.InstancedMesh | null)[]>([])
@@ -224,6 +229,15 @@ export default function Derail({ small, reduced }: SceneProps) {
       })
     return { cool: make(false), hot: make(true) }
   }, [])
+  // The vermilion screens are only shown at the break: upload them now, or ten textures upload in the middle of it (a visible stall).
+  useEffect(() => {
+    try {
+      textures.hot.forEach((t) => gl.initTexture(t))
+      textures.cool.forEach((t) => gl.initTexture(t))
+    } catch {
+      /* best effort */
+    }
+  }, [gl, textures])
   const hotState = useRef(false)
   const glowTex = useMemo(() => {
     const c = document.createElement('canvas')
@@ -320,22 +334,25 @@ export default function Derail({ small, reduced }: SceneProps) {
     // a sustained fast stretch gives it back. It pauses while the frame rate is capped on purpose, and stops raising for good
     // if lowering was ever needed after a raise, so it never oscillates.
     const gv = gov.current
-    if (!reduced && rawDelta < 0.5 && stage.progress < 0.78 && stage.interval === 0) {
+    // it waits for the intro's glide-in to finish: a resize while the scene arrives would be a stall in plain view
+    if (!reduced && rawDelta < 0.5 && stage.progress < 0.78 && stage.interval === 0 && stage.reveal >= 1) {
       if (gv.skip > 0) gv.skip--
       else {
         gv.t += rawDelta
-        if (++gv.n === 90) {
-          const avg = gv.t / 90
+        if (++gv.n === 36) {
+          const avg = gv.t / 36
           const dpr = state.viewport.dpr
-          const floor = small ? 1.75 : 1.5
-          const top = Math.max(floor, Math.min(window.devicePixelRatio || 1, 2))
-          if (avg > 0.03 && dpr > floor) {
+          const floor = small ? 1.25 : 1
+          const top = Math.max(floor, Math.min(window.devicePixelRatio || 1, small ? 2 : 1.5))
+          // Mid-transition a resize would itself stall (the post-processing buffers are rebuilt): only a really slow stretch counts.
+          const moving = stage.progress > 0.18 && stage.progress < 0.62
+          if (avg > (moving ? 0.045 : 0.03) && dpr > floor) {
             state.setDpr(Math.max(floor, dpr - 0.25))
             if (gv.raised) gv.locked = true
             gv.good = 0
           } else if (avg > 0.075 && stage.interval < 66) stage.interval = 66
           else if (avg > 0.045 && stage.interval < 33) stage.interval = 33
-          else if (avg < 0.019 && dpr < top && !gv.locked) {
+          else if (avg < 0.019 && dpr < top && !gv.locked && !moving) {
             if (++gv.good >= 3) {
               state.setDpr(Math.min(top, dpr + 0.25))
               gv.raised = true
@@ -486,7 +503,7 @@ export default function Derail({ small, reduced }: SceneProps) {
         </instancedMesh>
       </group>
       {!small && (
-        <EffectComposer multisampling={small ? 0 : window.devicePixelRatio >= 2 ? 2 : 4}>
+        <EffectComposer multisampling={window.devicePixelRatio >= 1.5 ? 0 : 2}>
           <Bloom ref={bloom as never} mipmapBlur luminanceThreshold={0.88} luminanceSmoothing={0.2} intensity={0.45} />
           <ChromaticAberration ref={chroma as never} offset={new THREE.Vector2(0.0007, 0.0004)} radialModulation={false} modulationOffset={0} />
         </EffectComposer>

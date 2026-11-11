@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react'
 import '@fontsource-variable/space-grotesk'
 import '@fontsource/dm-mono/400.css'
 import { Slot } from './Slot'
+import ResidenceSales from './ResidenceSales'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -33,7 +34,7 @@ export default function Residence() {
       ScrollTrigger.create({
         trigger: '[data-explode]',
         start: 'top top',
-        end: '+=420%',
+        end: '+=260%',
         pin: true,
         scrub: true,
         onUpdate: (self) => {
@@ -125,7 +126,7 @@ export default function Residence() {
         <div className="flex w-max animate-[marquee_28s_linear_infinite] gap-12 whitespace-nowrap text-[clamp(2.4rem,6vw,5rem)] font-bold tracking-[-0.03em]">
           {Array.from({ length: 2 }).map((_, k) => (
             <span key={k} className="flex gap-12">
-              {['Lumière traversante', 'Jardin suspendu', 'Hauteur 3,1 m', 'Rooftop privé', 'Parking connecté'].map((t) => (
+              {['Livraison T4 2027', 'Lumière traversante', 'Jardin en cœur d’îlot', 'Hauteur 3,1 m', 'Rooftop partagé', 'Parking en sous-sol'].map((t) => (
                 <span key={t + k}>{t} ✦</span>
               ))}
             </span>
@@ -133,15 +134,7 @@ export default function Residence() {
         </div>
       </section>
 
-      <section className="px-6 py-28 text-center md:px-12">
-        <h2 className="mx-auto max-w-5xl text-[clamp(2.6rem,8vw,7.5rem)] font-bold leading-[0.9] tracking-[-0.04em]">
-          Choisissez votre <span style={{ color: BLUE }}>étage.</span>
-        </h2>
-        <button className="mt-10 px-10 py-5 text-xs uppercase tracking-[0.2em] text-white transition-transform hover:scale-105" style={{ background: BLUE, fontFamily: MONO }}>
-          Visiter l’appartement témoin
-        </button>
-        <p className="mt-24 text-xs opacity-40" style={{ fontFamily: MONO }}>© Verticale — démonstration</p>
-      </section>
+      <ResidenceSales />
     </div>
   )
 }

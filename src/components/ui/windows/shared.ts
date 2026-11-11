@@ -5,13 +5,13 @@ export const preload: Record<DemoSlug, () => Promise<unknown>> = {
   medical: () => import('../../../demos/Medical'),
   hotel: () => import('../../../demos/Hotel'),
   residence: () => import('../../../demos/Residence'),
-  finance: () => import('../../../demos/Finance'),
+  restaurant: () => import('../../../demos/Restaurant'),
   shop: () => import('../../../demos/Shop'),
   ev: () => import('../../../demos/Volta'),
   ai: () => import('../../../demos/Synapse'),
   atelier: () => import('../../../demos/Atelier'),
   festival: () => import('../../../demos/Festival'),
-  watch: () => import('../../../demos/Watch'),
+  school: () => import('../../../demos/School'),
 }
 
 export interface Body {

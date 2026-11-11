@@ -67,10 +67,12 @@ export default function HeroCanvas({ onReady, active = true }: { onReady: () => 
   return (
     <Canvas
       key={small ? 'low' : 'full'} // crossing the phone breakpoint rebuilds the scene with the right settings
-      // sharp first: phones render at their real density (capped at 2); the governor only lowers it if frames run slow, never below 1
-      dpr={small ? [1.75, 2] : [1.5, 2]}
+      // Desktop renders at the screen's density up to 1.5 (bloom and aberration soften anything finer), phones up to 2;
+      // the governor in Derail lowers it within a second or two if frames run slow (floors: 1 desktop, 1.25 phones).
+      dpr={small ? [1.25, 2] : [1, 1.5]}
       camera={{ position: [0, 0, small ? 11 : 8.5], fov: 38 }}
-      gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}
+      // desktop draws through the post-processing composer, which does its own anti-aliasing: the canvas's would be wasted
+      gl={{ antialias: small, powerPreference: 'high-performance', alpha: true }}
       frameloop={reduced ? 'demand' : 'never'}
       // the phone's address bar resizes the viewport while scrolling: never re-create the drawing buffer for that
       resize={{ scroll: false, debounce: { scroll: 50, resize: 250 } }}

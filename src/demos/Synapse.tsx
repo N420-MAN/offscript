@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
 import '@fontsource-variable/inter'
 import '@fontsource/dm-mono/400.css'
+import SynapseProduct, { AppFrame } from './SynapseProduct'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -188,7 +189,7 @@ export default function Synapse() {
             <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: MINT, boxShadow: `0 0 12px ${MINT}` }} />synapse
           </span>
           <span className="hidden gap-8 opacity-60 md:flex"><span>Produit</span><span>Sécurité</span><span>Documentation</span></span>
-          <span className="rounded-full border px-4 py-2" style={{ borderColor: VIO, color: '#cfc4ff' }}>Demander un accès</span>
+          <a href="#demo" className="rounded-full border px-4 py-2 transition-colors hover:bg-white/5" style={{ borderColor: VIO, color: '#cfc4ff' }}>Demander une démo</a>
         </header>
         <div className="absolute bottom-[12%] left-0 max-w-3xl px-6 md:px-12">
           <p className="mb-5 text-xs uppercase tracking-[0.28em]" style={{ fontFamily: MONO, color: MINT }}>Plateforme d’intelligence documentaire</p>
@@ -198,6 +199,8 @@ export default function Synapse() {
           </h1>
         </div>
       </section>
+
+      <AppFrame />
 
       <section data-cards className="grid gap-5 px-6 py-24 md:grid-cols-3 md:px-12">
         <div data-card className="rounded-2xl border border-white/10 p-7 md:col-span-2" style={{ background: 'linear-gradient(160deg,#0b0f1d,#070a14)' }}>
@@ -224,13 +227,7 @@ export default function Synapse() {
         </div>
       </section>
 
-      <section className="px-6 pb-32 pt-10 text-center md:px-12">
-        <h2 className="mx-auto max-w-4xl text-[clamp(2.4rem,7vw,6rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
-          Donnez un sens à <span style={{ background: `linear-gradient(90deg, ${VIO}, ${MINT})`, WebkitBackgroundClip: 'text', color: 'transparent' }}>tout ce que vous savez.</span>
-        </h2>
-        <button className="mt-10 rounded-full px-10 py-4 text-sm font-medium text-black transition-transform hover:scale-105" style={{ background: MINT }}>Demander un accès</button>
-        <p className="mt-24 text-xs opacity-35" style={{ fontFamily: MONO }}>© Synapse — démonstration</p>
-      </section>
+      <SynapseProduct />
     </div>
   )
 }
