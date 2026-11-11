@@ -1,8 +1,12 @@
 import gsap from 'gsap'
+import { DEMOS } from '../demos/meta'
 
 /**
  * Each demo opens (and closes) with its own transition, tied to what the site is about, so no two feel alike.
- * 'rip' (Fragment) is handled by the callers; everything else is built here out of slices of the demo's preview image.
+ * 'rip' (Fragment) is handled by the callers; everything else is built here out of slices of the demo's curtain.
+ *
+ * The curtain is the demo's own colours with its name set large, never a screenshot: a screenshot is taken at one
+ * window size and never lines up with the live page beneath it, so the page would visibly jump as it was uncovered.
  */
 export type Reveal = 'bloom' | 'arches' | 'floors' | 'bars' | 'charge' | 'dots' | 'doors' | 'pulse' | 'dial'
 export const STYLE_OF: Record<string, Reveal | 'rip'> = {
@@ -20,18 +24,35 @@ export const STYLE_OF: Record<string, Reveal | 'rip'> = {
 
 type Origin = { x: number; y: number }
 
-/** Builds the pieces that exactly cover the screen with the demo's preview, and returns the function that plays the reveal. */
-export function prepare(style: Reveal, cover: HTMLElement, src: string, origin: Origin): (done: () => void) => void {
+/** The demo's curtain as one full-screen layer: its ground colour, its kind in small capitals, its name set large. */
+export function curtainLayer(slug: string, W = window.innerWidth, H = window.innerHeight, dx = 0, dy = 0, withName = true) {
+  const d = DEMOS.find((m) => m.slug === slug)
+  const [bg, ink] = d?.colors ?? ['#0b1020', '#f2f0ea']
+  const el = document.createElement('div')
+  el.style.cssText = `position:absolute;left:${dx}px;top:${dy}px;width:${W}px;height:${H}px;background:${bg};color:${ink};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vw;pointer-events:none`
+  if (withName && d) {
+    const vw = Math.min(15, 132 / Math.max(6, d.name.length))
+    el.innerHTML = `<span style="font:500 clamp(0.7rem,0.9vw,0.9rem)/1 'DM Mono',monospace;letter-spacing:.28em;text-transform:uppercase;opacity:.7">${d.kind}</span><span style="font:800 ${vw}vw/0.9 'Bricolage Grotesque Variable',system-ui,sans-serif;letter-spacing:-0.045em;white-space:nowrap">${d.name}</span>`
+  }
+  return el
+}
+
+/** Resolves once the demo's code is loaded and React has had a moment to mount it under the cover. */
+export function mounted(load: () => Promise<unknown>, extra = 160) {
+  return load()
+    .catch(() => undefined)
+    .then(() => new Promise<void>((res) => requestAnimationFrame(() => requestAnimationFrame(() => window.setTimeout(res, extra)))))
+}
+
+/** Builds the pieces that exactly cover the screen with the demo's curtain, and returns the function that plays the reveal. */
+export function prepare(style: Reveal, cover: HTMLElement, slug: string, origin: Origin): (done: () => void) => void {
   const W = window.innerWidth
   const H = window.innerHeight
-  const sc = Math.max(W / 1280, H / 800)
-  const iw = 1280 * sc
-  const ih = 800 * sc
-  const imgX = (W - iw) / 2
-  const imgY = (H - ih) / 2
-  const piece = (l: number, t: number, w: number, h: number, extra = '') => {
+  // each piece is a window onto the same full-screen curtain, so the name tears cleanly across the pieces
+  const piece = (l: number, t: number, w: number, h: number, extra = '', withName = true) => {
     const d = document.createElement('div')
-    d.style.cssText = `position:absolute;left:${l}px;top:${t}px;width:${w + 1}px;height:${h + 1}px;background:#0b1020 url(${src}) ${imgX - l}px ${imgY - t}px/${iw}px ${ih}px no-repeat;will-change:transform;${extra}`
+    d.style.cssText = `position:absolute;left:${l}px;top:${t}px;width:${w + 1}px;height:${h + 1}px;overflow:hidden;will-change:transform;${extra}`
+    d.appendChild(curtainLayer(slug, W, H, -l, -t, withName))
     return d
   }
   const rad = Math.hypot(W, H)
@@ -117,7 +138,7 @@ export function prepare(style: Reveal, cover: HTMLElement, src: string, origin: 
     const rows = Math.ceil(H / cell)
     const maxD = Math.hypot(Math.max(origin.x, W - origin.x), Math.max(origin.y, H - origin.y))
     const cells: HTMLElement[] = []
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push(piece(c * cell, r * cell, cell, cell))
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push(piece(c * cell, r * cell, cell, cell, '', false))
     add(...cells)
     return (done) => {
       const tl = gsap.timeline({ onComplete: done })

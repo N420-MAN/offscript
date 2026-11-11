@@ -17,7 +17,7 @@ export const DEMOS: DemoMeta[] = [
   { slug: 'shop', name: 'Fragment', kind: 'Objets de collection', tagline: 'Faites tourner le monde.', colors: ['#ff5ea8', '#ffe14d'] },
   { slug: 'ev', name: 'Volta', kind: 'Voitures électriques', tagline: 'Le silence a une puissance.', colors: ['#06080b', '#3de0ff'] },
   { slug: 'ai', name: 'Synapse', kind: 'Intelligence documentaire', tagline: 'L’intelligence qui relie.', colors: ['#05070d', '#8b6cff'] },
-  { slug: 'rental', name: 'Rihla', kind: 'Location de voitures', tagline: 'Les clés à l’arrivée.', colors: ['#f7f5f0', '#d7261e'] },
+  { slug: 'rental', name: 'Rihla', kind: 'Location de voitures', tagline: 'La route commence à l’aéroport.', colors: ['#1c1838', '#ff9a62'] },
   { slug: 'festival', name: 'Pulse', kind: 'Festival électronique', tagline: 'Trois nuits. Zéro silence.', colors: ['#050008', '#ff2fb4'] },
   { slug: 'school', name: 'Les Cèdres', kind: 'École privée', tagline: 'Apprendre à penser.', colors: ['#fbf8f1', '#12372a'] },
 ]

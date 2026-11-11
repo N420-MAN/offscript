@@ -3,7 +3,8 @@ import gsap from 'gsap'
 import { DEMOS } from '../../demos/meta'
 import { stage } from '../../state/stage'
 import { TEAR, tearBottom, tearTop } from '../../lib/tear'
-import { prepare, STYLE_OF } from '../../lib/transitions'
+import { curtainLayer, mounted, prepare, STYLE_OF } from '../../lib/transitions'
+import { growToCurtain } from '../../lib/openDemo'
 import { smoothstep } from '../../lib/math'
 import { prefersReducedMotion } from '../../hooks/useCapabilities'
 import { BAR, HOMES_D, HOMES_M, RING_R, preload, rnd, type Body } from './windows/shared'
@@ -189,42 +190,24 @@ export default function FloatingWindows() {
       const d = DEMOS[i]
       const b = bodies[i]
       stage.lastOpened = d.slug
-      void preload[d.slug]()
+      const loading = preload[d.slug]()
       if (reduced) {
         window.location.hash = `#/demo/${d.slug}`
         return
       }
-      const src = `/demos/${d.slug}.jpg`
       const cover = document.createElement('div')
       cover.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none'
       document.body.appendChild(cover)
 
-      const win = document.createElement('div')
-      win.style.cssText = `position:absolute;left:${b.x - (b.w * b.sc) / 2}px;top:${b.y - (b.h * b.sc) / 2}px;width:${b.w * b.sc}px;height:${b.h * b.sc}px;overflow:hidden;border-radius:10px;background:#000;transform:rotate(${b.angle}deg);box-shadow:0 30px 80px rgba(0,0,0,.6)`
-      const im = document.createElement('img')
-      im.src = src
-      im.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block'
-      win.appendChild(im)
-      cover.appendChild(win)
-
-      // 1. the window swings square and fills the screen
-      gsap.to(win, {
-        left: 0,
-        top: 0,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        rotation: 0,
-        borderRadius: 0,
-        duration: 0.6,
-        ease: 'expo.inOut',
-        onComplete: () => {
-          const style = STYLE_OF[d.slug]
-          if (style === 'rip') return tear()
-          // every other demo has its own reveal, built from slices of the same preview the window was showing
-          const go = prepare(style, cover, src, { x: b.x, y: b.y })
-          window.location.hash = `#/demo/${d.slug}`
-          window.setTimeout(() => go(() => cover.remove()), 340)
-        },
+      // 1. the window swings square, fills the screen and becomes the demo's curtain
+      const rect = { left: b.x - (b.w * b.sc) / 2, top: b.y - (b.h * b.sc) / 2, width: b.w * b.sc, height: b.h * b.sc }
+      growToCurtain(d.slug, cover, rect, b.angle, 10).eventCallback('onComplete', () => {
+        const style = STYLE_OF[d.slug]
+        if (style === 'rip') return tear()
+        // every other demo has its own reveal, played on the curtain once the live page is mounted beneath it
+        const go = prepare(style, cover, d.slug, { x: b.x, y: b.y })
+        window.location.hash = `#/demo/${d.slug}`
+        void mounted(() => loading).then(() => go(() => cover.remove()))
       })
 
       // 2. it rips along a jagged line; the live site is already mounted underneath
@@ -234,10 +217,7 @@ export default function FloatingWindows() {
         const half = (clip: string) => {
           const h = document.createElement('div')
           h.style.cssText = `position:absolute;inset:0;clip-path:polygon(${clip});will-change:transform`
-          const i2 = document.createElement('img')
-          i2.src = src
-          i2.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block'
-          h.appendChild(i2)
+          h.appendChild(curtainLayer(d.slug))
           return h
         }
         const glow = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -256,8 +236,8 @@ export default function FloatingWindows() {
           tl.to(bot, { yPercent: 62, rotation: 1.2, duration: 1, ease: 'power4.inOut' }, 0.04)
           tl.to(glow, { opacity: 0, duration: 0.7, ease: 'power2.in' }, 0.35)
         }
-        // give React a beat to mount the page beneath the overlay
-        window.setTimeout(go, 320)
+        // wait until the page is mounted beneath the overlay
+        void mounted(() => loading).then(go)
       }
     }
 

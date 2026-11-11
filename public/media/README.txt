@@ -8,7 +8,7 @@ restaurant/   Maison Safran (restaurant)      tajine, tajine-2, couscous-legumes
 school/       Les Cèdres (école privée)        classroom, classroom-2, library, lab, robotics, robotics-2, campus-2, debate
 clinic/       Centre Aurèle (centre médical)   consult, stetho, stetho-2, dental, dentist
 riad/         Riad Zéphyr (riad)               pool, pool-2, up, ceiling, tea, hammam, rooftop-night  (+ hotel/ room photos)
-rental/       Rihla (location de voitures)     clio, 208, logan, duster, jogger, tucson, prado, hairpins, tichka, dades, dunes, essaouira
+rental/       Rihla (location de voitures)     clio, 208, logan, duster, jogger, tucson, prado, tichka, dades, dunes, essaouira
 residence/    Verticale (promoteur)            floor-1..4
 volta/, pulse/   untouched demos (drop-in slots, see their code)
 

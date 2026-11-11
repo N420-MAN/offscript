@@ -135,3 +135,18 @@ Fragment (shop), Volta (EV) and Pulse (festival) are untouched.
   - clear conditions, and booking with options, a live total, payment on delivery and a WhatsApp field;
   - an FAQ.
 - 12 free-licence photos are in `public/media/rental/`, credited in the footer. The fonts were added to package.json.
+
+### Transition fix and Rihla wow pass
+
+- Demo transitions (open, close, previous/next) no longer use screenshots:
+  - They now play on a curtain in the demo's own colours with its name set large.
+  - The previews were taken at 1440x900, so on any other window size they were cropped differently from the live page. The page visibly jumped (missing header, content shifted) when it was uncovered.
+  - Each reveal now waits until the demo's code is loaded, instead of a fixed 340 ms.
+  - Closing raises the curtain as a wipe instead of a crossfade.
+- Rihla is rebuilt around a scroll-driven 3D drive over the Tizi n'Tichka at dusk (three.js, `src/demos/RentalDrive.tsx`):
+  - Low-poly Atlas terrain, red and white kerb stones, kilometre posts in Arabic and French, and a white car with tail lights.
+  - A dashboard reads out km driven, altitude (up to 2 260 m) and distance to Ouarzazate.
+  - Three stops carry the promises.
+  - The fleet is now an agency key board: fobs coloured by category, each swings when touched, and the chosen car rolls onto the display.
+  - New palette (Atlas dusk) and type: Big Shoulders Display, Instrument Sans and Noto Kufi Arabic.
+  - The hairpins photo is no longer used.

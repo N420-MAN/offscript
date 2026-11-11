@@ -3,7 +3,8 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { DEMOS, type DemoSlug } from './meta'
 import { TEAR, tearBottom, tearTop, tearY } from '../lib/tear'
-import { prepare, STYLE_OF } from '../lib/transitions'
+import { curtainLayer, mounted, prepare, STYLE_OF } from '../lib/transitions'
+import { preload } from '../components/ui/windows/shared'
 
 const pages: Record<DemoSlug, React.LazyExoticComponent<() => React.JSX.Element>> = {
   medical: lazy(() => import('./Medical')),
@@ -38,7 +39,6 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
     return
   }
   closing = true
-  const src = `/demos/${slug}.jpg`
   const cover = document.createElement('div')
   cover.style.cssText = 'position:fixed;inset:0;z-index:9999;overflow:hidden;perspective:1400px'
   document.body.appendChild(cover)
@@ -46,11 +46,12 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
   const style = STYLE_OF[slug]
   if (style !== 'rip') {
     // the demo's own reveal, played in the same language it opened with
-    const go = prepare(style, cover, src, { x: window.innerWidth / 2, y: window.innerHeight / 2 })
-    gsap.fromTo(cover, { opacity: 0 }, {
-      opacity: 1,
-      duration: 0.3,
-      ease: 'power1.out',
+    const go = prepare(style, cover, slug, { x: window.innerWidth / 2, y: window.innerHeight / 2 })
+    // the curtain rises over the page as one clean wipe (a fade would show both pages through each other)
+    gsap.fromTo(cover, { clipPath: 'inset(100% 0% 0% 0%)' }, {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      duration: 0.55,
+      ease: 'expo.inOut',
       onComplete: () => {
         window.location.hash = '#/'
         window.setTimeout(() => {
@@ -78,11 +79,8 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
 
   const half = (clip: string) => {
     const h = document.createElement('div')
-    h.style.cssText = `position:absolute;inset:0;clip-path:polygon(${clip});will-change:transform;background:#0b1020`
-    const im = document.createElement('img')
-    im.src = src
-    im.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block'
-    h.appendChild(im)
+    h.style.cssText = `position:absolute;inset:0;clip-path:polygon(${clip});will-change:transform`
+    h.appendChild(curtainLayer(slug))
     return h
   }
 
@@ -140,7 +138,7 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
   )
 }
 
-/** Steps sideways to a neighbouring demo: its preview washes over the page, the new page mounts beneath, the wash lifts. */
+/** Steps sideways to a neighbouring demo: its curtain washes over the page, the new page mounts beneath, the wash lifts. */
 function step(to: DemoSlug) {
   if (closing) return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -148,9 +146,10 @@ function step(to: DemoSlug) {
     return
   }
   closing = true
-  const meta = DEMOS.find((d) => d.slug === to)!
+  const loading = preload[to]()
   const cover = document.createElement('div')
-  cover.style.cssText = `position:fixed;inset:0;z-index:9999;pointer-events:none;background:${meta.colors[0]} url(/demos/${to}.jpg) center/cover no-repeat`
+  cover.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden'
+  cover.appendChild(curtainLayer(to))
   document.body.appendChild(cover)
   gsap.fromTo(cover, { clipPath: 'inset(0 0 0 100%)' }, {
     clipPath: 'inset(0 0 0 0%)',
@@ -158,7 +157,7 @@ function step(to: DemoSlug) {
     ease: 'expo.inOut',
     onComplete: () => {
       window.location.hash = `#/demo/${to}`
-      window.setTimeout(() => {
+      void mounted(() => loading).then(() => {
         gsap.to(cover, {
           clipPath: 'inset(0 100% 0 0)',
           duration: 0.6,
@@ -168,7 +167,7 @@ function step(to: DemoSlug) {
             closing = false
           },
         })
-      }, 260)
+      })
     },
   })
 }
