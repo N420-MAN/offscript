@@ -3,16 +3,16 @@ import { preview } from '../../demos/meta'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
-import { EXPERTISES } from '../../data/site'
+import { ALSO, SERVICES } from '../../data/site'
 import { prefersReducedMotion } from '../../hooks/useCapabilities'
 
 gsap.registerPlugin(ScrollTrigger)
 
-/** One demo that shows each area of expertise at work; its preview follows the pointer over the list. */
-const PREVIEW = ['restaurant', 'rental', 'ai', 'residence'] as const
+/** One concept project that shows each service at work; its preview follows the pointer over the list. */
+const PREVIEW = ['residence', 'restaurant', 'shop', 'rental'] as const
 
 /**
- * Four areas of expertise as one typographic stack: the open line grows, the others recede. Hover, focus or tap.
+ * Four services as one typographic stack: the open line grows, the others recede. Hover, focus or tap.
  * On a mouse, a small preview of a matching demo trails the pointer across the list.
  */
 export default function Services() {
@@ -65,20 +65,20 @@ export default function Services() {
   return (
     <section
       ref={root}
-      id="expertises"
-      aria-labelledby="expertises-title"
+      id="services"
+      aria-labelledby="services-title"
       className="relative px-5 pb-32 pt-36 md:px-10 md:pt-48"
       style={{ background: 'linear-gradient(180deg, #0b1020 0%, #08090b 36vh)' }}
     >
       <div className="grid gap-8 md:grid-cols-12 md:items-end">
         <div className="md:col-span-8">
-          <p data-s-in className="label mb-6 text-signal">02 — Ce que nous faisons</p>
-          <h2 data-s-in id="expertises-title" className="display max-w-[16ch] text-[clamp(2.8rem,8.4vw,8rem)]">
-            We build beyond the <span className="serif-accent text-signal" style={{ fontSize: '1.05em' }}>ordinary.</span>
+          <p data-s-in className="label mb-6 text-signal">02 — Services</p>
+          <h2 data-s-in id="services-title" className="display max-w-[16ch] text-[clamp(2.8rem,8.4vw,8rem)]">
+            De l’idée à l’expérience <span className="serif-accent text-signal" style={{ fontSize: '1.05em' }}>digitale.</span>
           </h2>
         </div>
         <p data-s-in className="max-w-md text-base leading-relaxed text-bone/75 md:col-span-4 md:text-lg">
-          De l’idée à la réalisation, nous combinons design, technologie et créativité pour donner vie à des projets digitaux ambitieux.
+          Nous imaginons, concevons et développons des expériences web qui donnent une nouvelle dimension aux entreprises.
         </p>
       </div>
 
@@ -99,7 +99,7 @@ export default function Services() {
           {PREVIEW.map((slug, i) => (
             <img
               key={slug}
-              src={preview(slug)}
+              src={preview(slug, 'sm')}
               alt=""
               loading="lazy"
               decoding="async"
@@ -110,7 +110,7 @@ export default function Services() {
             />
           ))}
         </div>
-        {EXPERTISES.map((e, i) => {
+        {SERVICES.map((e, i) => {
           const on = open === i
           return (
             <div key={e.n} data-s-row className="border-t border-bone/15 last:border-b" onPointerEnter={(ev) => ev.pointerType === 'mouse' && setOpen(i)}>
@@ -134,16 +134,22 @@ export default function Services() {
                 </button>
               </h3>
               <div id={`exp-${i}`} role="region" aria-label={e.title} className="grid transition-[grid-template-rows] duration-500 ease-out" style={{ gridTemplateRows: on ? '1fr' : '0fr' }}>
-                <ul className="flex flex-wrap gap-3 overflow-hidden pl-12 md:pl-24" style={{ paddingBottom: on ? '2rem' : 0, transition: 'padding 0.5s ease-out' }}>
-                  {e.items.map((it) => (
-                    <li key={it} className="rounded-full border border-bone/25 px-4 py-2 text-sm text-bone/85 md:text-base">{it}</li>
-                  ))}
-                </ul>
+                <div className="overflow-hidden pl-12 md:pl-24" style={{ paddingBottom: on ? '2rem' : 0, transition: 'padding 0.5s ease-out' }}>
+                  <p className="mb-5 max-w-xl text-base leading-relaxed text-bone/80 md:text-lg">{e.text}</p>
+                  <ul className="flex flex-wrap gap-3">
+                    {e.items.map((it) => (
+                      <li key={it} className="rounded-full border border-bone/25 px-4 py-2 text-sm text-bone/85 md:text-base">{it}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           )
         })}
       </div>
+      <p data-s-in className="mt-10 max-w-xl text-sm leading-relaxed text-bone/60 md:pl-24 md:text-base">
+        En complément d’un projet web : {ALSO.join(' et ').toLowerCase()}, pour une présence cohérente du logo au dernier écran.
+      </p>
     </section>
   )
 }

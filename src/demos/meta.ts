@@ -22,6 +22,10 @@ export const DEMOS: DemoMeta[] = [
   { slug: 'school', name: 'Les Cèdres', kind: 'École privée', tagline: 'Apprendre à penser.', colors: ['#fbf8f1', '#12372a'] },
 ]
 
-/** A demo's preview picture. The version makes browsers fetch a fresh copy whenever the previews are retaken. */
-export const PREVIEW_VERSION = 4
-export const preview = (slug: string) => `/demos/${slug}.jpg?v=${PREVIEW_VERSION}`
+/**
+ * A demo's preview picture (WebP): 'lg' is 1200 px wide, 'sm' 720 px for the small floating windows and hover peeks.
+ * The version makes browsers fetch a fresh copy whenever the previews are retaken.
+ */
+export const PREVIEW_VERSION = 5
+export const preview = (slug: string, size: 'sm' | 'lg' = 'lg') => `/demos/${slug}${size === 'sm' ? '-720' : ''}.webp?v=${PREVIEW_VERSION}`
+export const previewSet = (slug: string) => `${preview(slug, 'sm')} 720w, ${preview(slug)} 1200w`

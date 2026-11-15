@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react'
+import { NAV as LINKS } from '../../data/site'
 
-const NAV = [
-  ['Studio', '#studio'],
-  ['Expertises', '#expertises'],
-  ['Projets', '#projets'],
-  ['Contact', '#contact'],
-] as const
+const NAV = [...LINKS, ['Contact', '#contact']] as const
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
@@ -19,6 +15,7 @@ export function SiteHeader() {
       let cur = ''
       let best = -Infinity
       for (const [, href] of NAV) {
+        if (href === '#top') continue
         const el = document.querySelector(href)
         const top = el ? el.getBoundingClientRect().top : Infinity
         if (top <= window.innerHeight * 0.5 && top > best) {
@@ -60,8 +57,8 @@ export function SiteHeader() {
         <a href="#/" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0 }) }} className="pointer-events-auto font-display text-2xl font-extrabold tracking-[-0.04em] md:text-[2rem]" aria-label="OFFSCRIPT — accueil">
           OFF<span className="text-signal">/</span>SCRIPT
         </a>
-        <nav aria-label="Navigation principale" className="pointer-events-auto hidden gap-10 md:flex">
-          {NAV.map(([label, href]) => (
+        <nav aria-label="Navigation principale" className="pointer-events-auto hidden gap-9 md:flex lg:gap-10">
+          {LINKS.map(([label, href]) => (
             <a
               key={label}
               href={href}
@@ -73,11 +70,13 @@ export function SiteHeader() {
             </a>
           ))}
         </nav>
-        <p className="label hidden text-right text-[0.85rem] leading-snug text-bone/70 md:block">
-          Casablanca, Maroc
-          <br />
-          Digital studio
-        </p>
+        <a
+          href="#contact"
+          aria-current={current === '#contact' ? 'location' : undefined}
+          className="btn group label pointer-events-auto hidden items-center gap-2 rounded-full border border-signal px-5 py-2.5 text-[0.85rem] text-bone transition-colors hover:bg-signal hover:text-void md:inline-flex"
+        >
+          Contact <span aria-hidden className="text-signal transition-colors group-hover:text-void">↗</span>
+        </a>
         <button type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="mobile-menu" className="label pointer-events-auto rounded-full border border-bone/30 px-5 py-2.5 text-[0.85rem] md:hidden">
           Menu
         </button>
@@ -90,10 +89,10 @@ export function SiteHeader() {
           </div>
           <nav aria-label="Navigation mobile" className="mt-16 flex flex-1 flex-col gap-3">
             {NAV.map(([label, href]) => (
-              <a key={label} href={href} onClick={() => setOpen(false)} className="display text-[clamp(3rem,15vw,5rem)] transition-colors active:text-signal">{label}</a>
+              <a key={label} href={href} onClick={() => setOpen(false)} className={`display text-[clamp(3rem,15vw,5rem)] transition-colors active:text-signal ${href === '#contact' ? 'text-signal' : ''}`}>{label}</a>
             ))}
           </nav>
-          <p className="label pb-4 text-ash">Casablanca, Maroc · Digital studio</p>
+          <p className="label pb-4 text-ash">Studio de web design &amp; développement · Casablanca</p>
         </div>
       )}
     </>
@@ -129,7 +128,7 @@ export function HeroLayer({ layer, variant = 'script' }: { layer: 'back' | 'fron
           </h1>
         ) : (
           <h1
-          className="display text-[clamp(2.4rem,min(11.5vw,calc((100svh-17.5rem)/2.9)),10.5rem)]"
+          className="display text-[clamp(2.4rem,min(11.5vw,calc((100svh-21rem)/2.9)),10.5rem)]"
           {...(front ? { 'aria-label': 'We don’t follow the script.' } : {})}
         >
           <span className={`block overflow-hidden pb-[0.04em] ${hide(!front)}`}>
@@ -143,22 +142,25 @@ export function HeroLayer({ layer, variant = 'script' }: { layer: 'back' | 'fron
           </span>
           </h1>
         )}
-        <p {...(front ? { 'data-hero-sub': '' } : {})} className={`mt-6 max-w-md text-base leading-relaxed text-bone/80 md:text-lg [@media(max-height:520px)]:hidden ${hide(front)}`}>
-          Nous créons des expériences digitales{' '}
-          <span className="serif-accent text-xl md:text-2xl">qui ne ressemblent à aucune autre.</span>
+        <p {...(front ? { 'data-hero-sub': '' } : {})} className={`mt-6 max-w-lg text-base leading-relaxed text-bone/85 md:text-lg [@media(max-height:520px)]:hidden ${hide(front)}`}>
+          Nous concevons et développons des sites web distinctifs pour les entreprises qui veulent aller{' '}
+          <span className="serif-accent text-xl md:text-2xl">au-delà de l’ordinaire.</span>
+        </p>
+        <p {...(front ? { 'data-hero-sub': '' } : {})} className={`label mt-4 max-w-lg text-[0.8rem] leading-relaxed text-bone/60 [@media(max-height:620px)]:hidden ${hide(front)}`}>
+          Design stratégique. Développement sur mesure. Expériences digitales pensées pour durer.
         </p>
         <div {...(front ? { 'data-hero-sub': '' } : {})} className={`mt-8 flex flex-wrap items-center gap-3 ${hide(front)}`}>
           <a
-            href="#expertises"
+            href="#contact"
             className="btn label pointer-events-auto rounded-full bg-bone px-6 py-3.5 text-void hover:bg-signal"
           >
-            Découvrir notre univers
+            Parlons de votre projet <span aria-hidden>↗</span>
           </a>
           <a
-            href="#contact"
+            href="#travaux"
             className="btn label pointer-events-auto rounded-full border border-bone/30 px-6 py-3.5 hover:border-signal hover:text-signal"
           >
-            Parlons de votre projet
+            Explorer nos projets <span aria-hidden>↓</span>
           </a>
         </div>
       </section>

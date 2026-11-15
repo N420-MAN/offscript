@@ -25,6 +25,9 @@ export function isDemoSlug(s: string): s is DemoSlug {
 
 let closing = false
 
+/** Where closing a demo leads: back to its project page when it was opened from there, else the home page. */
+const backTo = (slug: DemoSlug) => (window.location.hash.includes('from=projet') ? `#/projet/${slug}` : '#/')
+
 /**
  * Closing a demo rips it open. A crack races across the live page, the screen flares, and the page tears along the
  * same jagged line the window tore along when it opened; the halves swing away with a spray of shards, revealing the
@@ -34,7 +37,7 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
   e?.preventDefault()
   if (closing) return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    window.location.hash = '#/'
+    window.location.hash = backTo(slug)
     window.dispatchEvent(new CustomEvent('offscript:return'))
     return
   }
@@ -53,7 +56,7 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
       duration: 0.55,
       ease: 'expo.inOut',
       onComplete: () => {
-        window.location.hash = '#/'
+        window.location.hash = backTo(slug)
         window.setTimeout(() => {
           window.dispatchEvent(new CustomEvent('offscript:return'))
           go(() => {
@@ -104,7 +107,7 @@ function leave(e: { preventDefault(): void } | null, slug: DemoSlug, shell: HTML
       glow.querySelectorAll<SVGElement>('[data-c]').forEach((n) => (n.style.strokeDashoffset = '0'))
       cover.replaceChildren(glow, top, bot, flash)
       cover.style.pointerEvents = 'auto'
-      window.location.hash = '#/'
+      window.location.hash = backTo(slug)
       const shards: HTMLElement[] = []
       for (let i = 0; i < 22; i++) {
         const x = 4 + (i / 21) * 92

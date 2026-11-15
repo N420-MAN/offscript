@@ -30,7 +30,8 @@ export default function Process() {
           d.style.background = on ? '#ff4b1f' : '#08090b'
           d.style.boxShadow = on ? '0 0 0 6px rgba(255,75,31,0.18)' : 'none'
         })
-        steps.forEach((s, i) => (s.style.opacity = i === lit ? '1' : '0.42'))
+        // only the large step titles recede: labels and descriptions keep full contrast
+        steps.forEach((s, i) => (s.querySelector<HTMLElement>('h3')!.style.opacity = i === lit ? '1' : '0.42'))
         if (count) count.textContent = PROCESS[lit].n
       }
       if (prefersReducedMotion()) {
@@ -72,10 +73,10 @@ export default function Process() {
           <span aria-hidden className="absolute bottom-0 left-[1.1rem] top-0 w-px bg-bone/15" />
           <span data-fill aria-hidden className="absolute bottom-0 left-[1.05rem] top-0 w-[2px] origin-top bg-signal" style={{ transform: 'scaleY(0)' }} />
           {PROCESS.map((s) => (
-            <li key={s.n} data-step className="relative pb-20 pl-12 transition-opacity duration-500 last:pb-0 md:pb-28 md:pl-20">
+            <li key={s.n} data-step className="relative pb-20 pl-12 last:pb-0 md:pb-28 md:pl-20">
               <span data-dot aria-hidden className="absolute left-[0.7rem] top-6 h-[0.95rem] w-[0.95rem] rounded-full border-2 border-signal bg-void transition-[background,box-shadow] duration-500 md:top-8" />
               <span className="label text-ash">{s.n}</span>
-              <h3 className="display mt-2 text-[clamp(2.4rem,6vw,5.6rem)]">{s.title}</h3>
+              <h3 className="display mt-2 text-[clamp(2.4rem,6vw,5.6rem)] transition-opacity duration-500">{s.title}</h3>
               <p className="mt-4 max-w-md text-base leading-relaxed text-bone/75 md:text-lg">{s.text}</p>
             </li>
           ))}

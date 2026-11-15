@@ -33,8 +33,11 @@ const BelowFold = memo(function BelowFold() {
   )
 })
 
+/** A live demo or a project page is open over the home page. */
+const onOverlay = () => window.location.hash.startsWith('#/demo/') || window.location.hash.startsWith('#/projet/')
+
 function shouldPlayIntro(): boolean {
-  if (window.location.hash.startsWith('#/demo/')) return false
+  if (onOverlay()) return false
   if (prefersReducedMotion()) return false
   const param = new URLSearchParams(window.location.search).get('intro')
   if (param === '0') return false
@@ -60,7 +63,7 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
   // its own mask, then the copy and buttons follow. Played once, on load only.
   const playedIntro = useRef(intro)
   useEffect(() => {
-    if (playedIntro.current || prefersReducedMotion() || window.location.hash.startsWith('#/demo/') || window.scrollY > 40) return
+    if (playedIntro.current || prefersReducedMotion() || onOverlay() || window.scrollY > 40) return
     const lines = document.querySelectorAll('[data-hero-line]')
     const subs = document.querySelectorAll('[data-hero-sub]')
     const tl = gsap.timeline({ delay: 0.15 })
@@ -102,6 +105,7 @@ export default function App({ hidden = false }: { hidden?: boolean }) {
     <main id="contenu" tabIndex={-1} data-intro={intro} className="bg-void outline-none">
       {/* The stage is 3.2 screens tall; its sticky child holds the whole journey. */}
       <div ref={stageRef} data-stage className="relative" style={{ height: '320vh' }}>
+        <div id="top" aria-hidden="true" className="absolute left-0 top-0 w-px" />
         {/* Anchor for the "Projets" link: the frame where the work floats. */}
         <div id="projets" aria-hidden="true" className="absolute left-0 w-px" style={{ top: 'calc(320vh - 100dvh)' }} />
         <div className="sticky top-0 h-[100dvh] overflow-hidden" style={{ height: '100svh' }}>

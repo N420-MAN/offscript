@@ -2,24 +2,22 @@ import { useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
-import { BUDGETS, PROJECT_TYPES, SITE } from '../../data/site'
+import { BUDGETS, NAV, PROJECT_TYPES, SERVICES, SITE } from '../../data/site'
 import { prefersReducedMotion } from '../../hooks/useCapabilities'
 
 gsap.registerPlugin(ScrollTrigger)
 
-type Values = { name: string; company: string; email: string; phone: string; type: string; budget: string; message: string; website: string }
+type Values = { name: string; company: string; email: string; type: string; budget: string; message: string; website: string }
 type Errors = Partial<Record<keyof Values, string>>
-const EMPTY: Values = { name: '', company: '', email: '', phone: '', type: '', budget: '', message: '', website: '' }
-const ORDER: (keyof Values)[] = ['name', 'company', 'email', 'phone', 'type', 'budget', 'message']
+const EMPTY: Values = { name: '', company: '', email: '', type: '', budget: '', message: '', website: '' }
+const ORDER: (keyof Values)[] = ['name', 'company', 'email', 'type', 'budget', 'message']
 
 function validate(v: Values): Errors {
   const e: Errors = {}
   if (v.name.trim().length < 2) e.name = 'Indiquez votre nom.'
-  if (v.company.trim().length < 2) e.company = 'Indiquez le nom de votre entreprise.'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email.trim())) e.email = 'Indiquez une adresse e-mail valide.'
-  if (v.phone.trim() && !/^\+?[\d\s().-]{8,20}$/.test(v.phone.trim())) e.phone = 'Ce numéro ne semble pas valide.'
   if (!v.type) e.type = 'Choisissez un type de projet.'
-  if (v.message.trim().length < 20) e.message = 'Décrivez votre besoin en quelques phrases (20 caractères minimum).'
+  if (v.message.trim().length < 20) e.message = 'Décrivez votre projet en quelques phrases (20 caractères minimum).'
   else if (v.message.length > 3000) e.message = 'Votre message est trop long (3 000 caractères maximum).'
   return e
 }
@@ -96,7 +94,8 @@ function ContactForm() {
       <div role="status" className="border border-signal/60 p-8 md:p-12">
         <p className="label text-signal">Message envoyé</p>
         <p className="display mt-4 text-[clamp(2rem,5vw,3.6rem)]">Merci.</p>
-        <p className="mt-4 max-w-md text-bone/80">Nous avons bien reçu votre demande et reviendrons vers vous.</p>
+        <p className="mt-4 max-w-md text-bone/80">Votre demande nous est bien parvenue. Nous vous répondrons par e-mail, à l’adresse indiquée.</p>
+        <button type="button" onClick={() => setStatus('idle')} className="label mt-8 underline underline-offset-4 hover:text-signal">Envoyer une autre demande</button>
       </div>
     )
   }
@@ -104,24 +103,23 @@ function ContactForm() {
   return (
     <form ref={form} onSubmit={submit} noValidate aria-label="Demande de projet" className="grid gap-x-10 gap-y-2 md:grid-cols-2">
       <Field id="f-name" label="Nom" error={errors.name}><input {...aria('name')} value={v.name} onChange={set('name')} autoComplete="name" className={input} /></Field>
-      <Field id="f-company" label="Entreprise" error={errors.company}><input {...aria('company')} value={v.company} onChange={set('company')} autoComplete="organization" className={input} /></Field>
-      <Field id="f-email" label="E-mail" error={errors.email}><input {...aria('email')} type="email" inputMode="email" value={v.email} onChange={set('email')} autoComplete="email" className={input} /></Field>
-      <Field id="f-phone" label="Téléphone" optional error={errors.phone}><input {...aria('phone')} type="tel" inputMode="tel" value={v.phone} onChange={set('phone')} autoComplete="tel" className={input} /></Field>
+      <Field id="f-company" label="Entreprise" optional error={errors.company}><input {...aria('company')} value={v.company} onChange={set('company')} autoComplete="organization" className={input} /></Field>
+      <Field id="f-email" label="Adresse e-mail" error={errors.email}><input {...aria('email')} type="email" inputMode="email" value={v.email} onChange={set('email')} autoComplete="email" className={input} /></Field>
       <Field id="f-type" label="Type de projet" error={errors.type}>
         <select {...aria('type')} value={v.type} onChange={set('type')} className={`${input} cursor-pointer`}>
           <option value="" className="bg-graphite">Sélectionnez…</option>
           {PROJECT_TYPES.map((t) => <option key={t} value={t} className="bg-graphite">{t}</option>)}
         </select>
       </Field>
-      <Field id="f-budget" label="Budget indicatif" optional error={errors.budget}>
+      <Field id="f-budget" label="Budget estimé" optional error={errors.budget}>
         <select {...aria('budget')} value={v.budget} onChange={set('budget')} className={`${input} cursor-pointer`}>
-          <option value="" className="bg-graphite">Sélectionnez…</option>
+          <option value="" className="bg-graphite">Je préfère ne pas préciser</option>
           {BUDGETS.map((t) => <option key={t} value={t} className="bg-graphite">{t}</option>)}
         </select>
       </Field>
       <div className="md:col-span-2">
-        <Field id="f-message" label="Votre besoin" error={errors.message}>
-          <textarea {...aria('message')} rows={5} value={v.message} onChange={set('message')} className={`${input} resize-y`} placeholder="Parlez-nous de votre activité, de vos objectifs, de vos délais…" />
+        <Field id="f-message" label="Description du projet" error={errors.message}>
+          <textarea {...aria('message')} rows={5} value={v.message} onChange={set('message')} className={`${input} resize-y`} placeholder="Votre activité, ce que vous voulez construire, vos délais…" />
         </Field>
       </div>
       {/* honeypot */}
@@ -129,7 +127,7 @@ function ContactForm() {
         <label>Ne pas remplir<input tabIndex={-1} autoComplete="off" name="website" value={v.website} onChange={set('website')} /></label>
       </div>
       <p className="md:col-span-2 max-w-xl text-xs leading-relaxed text-ash">
-        Les informations saisies servent uniquement à répondre à votre demande.
+        Les informations saisies servent uniquement à répondre à votre demande. Le budget est facultatif.
       </p>
       <div className="md:col-span-2">
         <button
@@ -154,19 +152,27 @@ function ContactForm() {
   )
 }
 
-const FOOT_NAV = [
-  ['Expertises', '#expertises'],
-  ['Projets', '#travaux'],
-  ['Studio', '#studio'],
-  ['Méthode', '#process'],
-  ['Contact', '#formulaire'],
-] as const
+const FOOT_NAV = [...NAV, ['Méthode', '#process'], ['Contact', '#formulaire']] as const
+const wa = SITE.whatsapp ? `https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}` : ''
 
-function Social({ label, href }: { label: string; href: string }) {
-  return href ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:text-signal hover:underline">{label}</a>
-  ) : (
-    <span className="text-ash">{label} <span className="normal-case tracking-normal opacity-70">— à confirmer</span></span>
+/** Direct ways to reach the studio, listed only once they are configured in data/site.ts. */
+function DirectContact() {
+  if (!SITE.email && !wa) return null
+  return (
+    <ul className="mt-10 space-y-4 border-t border-bone/15 pt-6 text-bone/85">
+      {SITE.email && (
+        <li>
+          <span className="label mb-1 block text-ash">E-mail</span>
+          <a href={`mailto:${SITE.email}`} className="text-lg underline-offset-4 hover:text-signal hover:underline">{SITE.email}</a>
+        </li>
+      )}
+      {wa && (
+        <li>
+          <span className="label mb-1 block text-ash">WhatsApp</span>
+          <a href={wa} target="_blank" rel="noopener noreferrer" className="text-lg underline-offset-4 hover:text-signal hover:underline">Écrire sur WhatsApp</a>
+        </li>
+      )}
+    </ul>
   )
 }
 
@@ -207,10 +213,10 @@ export default function Contact() {
         </div>
         <div className="lg:col-span-4 lg:pb-4">
           <p data-c-sub className="max-w-md text-lg leading-relaxed text-bone/80">
-            Votre prochain projet mérite une expérience digitale à la hauteur de vos ambitions.
+            Vous avez une idée, un projet ou une ambition digitale ? Parlons de ce que nous pouvons construire ensemble.
           </p>
           <a data-c-sub href="#formulaire" className="btn label mt-8 inline-block rounded-full bg-signal px-8 py-4 text-void hover:bg-bone">
-            Parlons de votre projet
+            Démarrer un projet <span aria-hidden>↗</span>
           </a>
         </div>
       </div>
@@ -219,18 +225,20 @@ export default function Contact() {
         <div>
           <h3 className="display text-[clamp(2rem,4.6vw,4rem)]">Parlons de<br />votre projet.</h3>
           <p className="mt-6 max-w-sm leading-relaxed text-bone/70">Quelques lignes suffisent pour commencer : votre activité, ce que vous voulez construire, et pour quand.</p>
+          <DirectContact />
         </div>
         <ContactForm />
       </div>
 
       <footer className="mt-28 pb-8 md:mt-40">
         <div className="grid gap-10 border-t border-bone/15 pt-12 sm:grid-cols-2 lg:grid-cols-12">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-4">
             <p className="display text-[clamp(2rem,3.4vw,3rem)]">
-              On écrit la suite <span className="serif-accent text-signal" style={{ fontSize: '1.08em' }}>ensemble ?</span>
+              We build beyond the <span className="serif-accent text-signal" style={{ fontSize: '1.08em' }}>ordinary.</span>
             </p>
+            <p className="mt-5 max-w-xs leading-relaxed text-bone/70">Studio indépendant de web design et développement, à Casablanca.</p>
           </div>
-          <nav aria-label="Pied de page" className="lg:col-span-3 lg:col-start-7">
+          <nav aria-label="Pied de page" className="lg:col-span-2 lg:col-start-6">
             <p className="label mb-4 text-ash">Navigation</p>
             <ul className="space-y-1">
               {FOOT_NAV.map(([label, href]) => (
@@ -243,14 +251,20 @@ export default function Contact() {
             </ul>
           </nav>
           <div className="lg:col-span-3">
-            <p className="label mb-4 text-ash">Studio</p>
-            <ul className="label space-y-3 leading-relaxed">
-              <li>
-                {SITE.email ? <a href={`mailto:${SITE.email}`} className="hover:text-signal">{SITE.email}</a> : <span className="text-ash">E-mail <span className="normal-case tracking-normal opacity-70">— à confirmer</span></span>}
-              </li>
-              <li><Social label="Instagram" href={SITE.instagram} /></li>
-              <li><Social label="LinkedIn" href={SITE.linkedin} /></li>
-              <li className="text-bone/80">{SITE.city}</li>
+            <p className="label mb-4 text-ash">Services</p>
+            <ul className="space-y-2 text-bone/85">
+              {SERVICES.map((sv) => <li key={sv.n}>{sv.title}</li>)}
+            </ul>
+          </div>
+          <div className="lg:col-span-2">
+            <p className="label mb-4 text-ash">Contact</p>
+            <ul className="space-y-2 leading-relaxed text-bone/85">
+              {SITE.email && <li><a href={`mailto:${SITE.email}`} className="hover:text-signal">{SITE.email}</a></li>}
+              {wa && <li><a href={wa} target="_blank" rel="noopener noreferrer" className="hover:text-signal">WhatsApp</a></li>}
+              <li><a href="#formulaire" className="hover:text-signal">Formulaire de projet</a></li>
+              {SITE.instagram && <li><a href={SITE.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-signal">Instagram</a></li>}
+              {SITE.linkedin && <li><a href={SITE.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-signal">LinkedIn</a></li>}
+              <li className="text-bone/70">{SITE.city}</li>
             </ul>
           </div>
         </div>

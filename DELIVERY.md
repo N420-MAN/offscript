@@ -150,3 +150,59 @@ Fragment (shop), Volta (EV) and Pulse (festival) are untouched.
   - The fleet is now an agency key board: fobs coloured by category, each swings when touched, and the chosen car rolls onto the display.
   - New palette (Atlas dusk) and type: Big Shoulders Display, Instrument Sans and Noto Kufi Arabic.
   - The hairpins photo is no longer used.
+
+## Website upgrade v1.1: web design and development studio (2026-11-15)
+
+Positioning: OFFSCRIPT is presented as a web design and development studio. Marketing and "croissance digitale" are gone; branding stays as a complementary skill.
+
+- **Navigation:** Accueil, Projets, Services, Studio, with a separate Contact button outlined in red. The phone menu has the same links.
+- **Hero:**
+  - "We don't follow the script." stays as the H1.
+  - New supporting copy: "Nous concevons et développons…".
+  - New secondary line: "Design stratégique…".
+  - New buttons: "Parlons de votre projet ↗" and "Explorer nos projets ↓".
+  - "Le digital ne devrait jamais être ordinaire." is unchanged in the next frame.
+- **Services (`#services`):** "De l'idée à l'expérience digitale."
+  - Four services: web design, développement web, e-commerce, expériences sur mesure. Each has a short explanation and a list of what it includes.
+  - Branding is mentioned as a complement.
+  - The data is in `src/data/site.ts`.
+- **Projects (`#travaux`):** "Des projets. Des univers."
+  - Every card shows its sector, a "Projet conceptuel" label, a one-line description and "Explorer le projet".
+  - A note under the heading says these are studio concepts, not client work.
+- **Project pages (`#/projet/<slug>`, `src/pages/ProjectPage.tsx`):** introduction, vision (stated as hypothetical), creative direction (identity, type, palette, design decisions, UX), development, an overview with two desktop and two phone screenshots (`public/projects/<slug>/*.webp`), and the "Vous avez un projet similaire ?" CTA.
+  - The text is in `src/data/projects.ts`. It contains no clients, results or figures.
+  - "Voir le site en direct" opens the demo, and closing the demo returns to the project page.
+  - "Tous les projets" returns to the card the visitor opened.
+- **Process:** Discovery, Direction, Development, Launch, with the brief's wording.
+- **Studio (`#studio`):** "Pas une agence de plus. Une autre façon de faire du web." plus the studio copy. The word-by-word light-up runs on desktop only; on phones the text is shown in full.
+- **Closing CTA:** "Ready to break the script?" with the new copy and a "Démarrer un projet ↗" button.
+- **Form:**
+  - Fields: Nom, Entreprise (optional), Adresse e-mail, Type de projet (Site vitrine, E-commerce, Landing page, Application web, Autre), Budget estimé (optional, "Je préfère ne pas préciser" by default), and Description du projet.
+  - It still sends through `api/contact.ts` (Resend), which now accepts the same fields. Success is shown only when the server confirms the message was sent.
+- **Footer:** "We build beyond the ordinary.", a positioning line, navigation, services, contact, Casablanca, and the year generated automatically. Email, WhatsApp, Instagram and LinkedIn appear only when filled in `src/data/site.ts`; the "à confirmer" placeholders are gone.
+- **SEO:**
+  - New title, description and Open Graph/Twitter tags, and a new `og.jpg` with the new positioning.
+  - `ProfessionalService` structured data.
+  - Canonical link, `og:url`, `sitemap.xml` and the `robots.txt` Sitemap line are generated at build time from the `SITE_URL` environment variable (see `vite.config.ts`). Without it they are left out rather than pointing at an unconfirmed domain.
+  - The old hand-written sitemap and robots file, which pointed at the unconfirmed offscript.ma, are removed.
+- **Performance:** previews are now WebP at two sizes (720 px for the floating windows, 1200 px for the cards with `srcset`), and project screenshots are WebP too. Home page weight went from 1,480 KB to 788 KB.
+- **Accessibility:** contrast fixes:
+  - only the large process titles fade, so labels and descriptions keep full contrast;
+  - the band's Pause button;
+  - the Studio section's numbers.
+
+### Lighthouse (local production build, intro skipped)
+
+| | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| Desktop | 63 | 96 | 100 | 100 |
+| Mobile | 48 | 100 | 100 | 100 |
+
+- LCP went from 8.4 s to 4.5 s on mobile and from 1.6 s to 0.9 s on desktop. CLS is 0.
+- **Performance** is limited by the 3D hero: three.js and the shader compile run on the CPU in Lighthouse, which has no GPU. Total blocking time varied between runs (0.8 s to 7.4 s), so treat that score as rough. Reaching 90+ would mean deferring or simplifying the 3D hero; that was not done, to keep the experience.
+- **Desktop accessibility** misses 100 only because the Studio headline starts faded before its scroll reveal, which is intentional. Screen readers get the full sentence through `aria-label`.
+
+### Still to provide (owner)
+
+- **Vercel environment variables:** `RESEND_API_KEY`, `CONTACT_TO`, `CONTACT_FROM` (on a domain verified in Resend), and `SITE_URL` (the production address). Until the first three are set, the form tells visitors their message was not sent.
+- **`src/data/site.ts`:** the public email and, if wanted, WhatsApp, Instagram and LinkedIn.

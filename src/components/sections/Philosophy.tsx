@@ -7,21 +7,22 @@ import { clamp01, smoothstep } from '../../lib/math'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const LINE_1 = 'Good design gets attention.'.split(' ')
-const LINE_2 = 'Great experiences make people'.split(' ')
+const LINE_1 = 'Pas une agence de plus.'.split(' ')
+const LINE_2 = 'Une autre façon de faire du'.split(' ')
 const PRINCIPLES = [
   ['Clair', 'Ce que vous proposez se comprend dès le premier écran.'],
   ['Singulier', 'Une direction pensée pour votre marque, jamais un modèle.'],
   ['Vivant', 'Le mouvement sert le récit, sans jamais ralentir la page.'],
 ] as const
 
-/** The statement lights up word by word as you scroll; the last word is the one that stays. */
+/** The studio's statement lights up word by word as you scroll; the last word is the one that stays. */
 export default function Philosophy() {
   const root = useRef<HTMLElement>(null)
 
   useGSAP(
     () => {
-      if (prefersReducedMotion()) return
+      // the scrubbed light-up needs the tall, pinned desktop layout; on phones the text is simply shown in full
+      if (prefersReducedMotion() || !window.matchMedia('(min-width: 768px)').matches) return
       const words = gsap.utils.toArray<HTMLElement>('[data-w]')
       const stay = root.current!.querySelector<HTMLElement>('[data-stay]')!
       const copy = root.current!.querySelector<HTMLElement>('[data-copy]')!
@@ -50,29 +51,31 @@ export default function Philosophy() {
   )
 
   return (
-    <section ref={root} id="studio" aria-labelledby="philosophy-title" className="relative bg-bone text-void md:h-[260vh]">
+    <section ref={root} id="studio" aria-labelledby="studio-title" className="relative bg-bone text-void md:h-[260vh]">
       <div className="px-5 py-32 md:sticky md:top-0 md:flex md:h-screen md:flex-col md:justify-center md:px-10 md:py-0">
-        <p className="label mb-8 text-[#d63a12]">04 — Notre philosophie</p>
-        <h2 id="philosophy-title" className="display text-[clamp(2.6rem,7vw,6.8rem)]" aria-label="Good design gets attention. Great experiences make people stay.">
+        <p className="label mb-8 text-[#c2300d]">04 — Studio</p>
+        <h2 id="studio-title" className="display text-[clamp(2.4rem,6.4vw,6.4rem)]" aria-label="Pas une agence de plus. Une autre façon de faire du web.">
           <span aria-hidden className="block">
             {LINE_1.map((w, i) => <span key={i} data-w className="mr-[0.22em] inline-block">{w}</span>)}
           </span>
           <span aria-hidden className="block">
             {LINE_2.map((w, i) => <span key={i} data-w className="mr-[0.22em] inline-block">{w}</span>)}
             <span data-w className="relative inline-block origin-left">
-              <span data-stay className="serif-accent inline-block origin-left text-signal" style={{ fontSize: '1.08em' }}>stay.</span>
-              <span data-bar className="absolute -bottom-1 left-0 h-[0.07em] w-full origin-left bg-signal" style={{ transform: 'scaleX(0)' }} />
+              <span data-stay className="serif-accent inline-block origin-left text-[#c2300d]" style={{ fontSize: '1.08em' }}>web.</span>
+              <span data-bar className="absolute -bottom-1 left-0 h-[0.07em] w-full origin-left bg-[#c2300d]" style={{ transform: 'scaleX(0)' }} />
             </span>
           </span>
         </h2>
-        <div data-copy className="mt-10 grid gap-10 md:mt-16 md:grid-cols-12 md:gap-8">
-          <p className="max-w-xl text-base leading-relaxed text-void/75 md:col-span-5 md:text-lg">
-            Nous ne créons pas des sites web pour remplir une adresse sur Internet. Nous concevons des expériences qui racontent, convainquent et font avancer les entreprises.
-          </p>
+        <div data-copy className="mt-10 grid gap-10 md:mt-14 md:grid-cols-12 md:gap-8">
+          <div className="max-w-xl space-y-4 text-base leading-relaxed text-void/80 md:col-span-5 md:text-[1.05rem]">
+            <p>OFFSCRIPT est un studio indépendant de design et développement web basé à Casablanca.</p>
+            <p>Nous croyons qu’un site web ne devrait pas simplement exister. Il devrait raconter quelque chose, inspirer confiance et donner envie d’aller plus loin.</p>
+            <p>Notre approche associe direction artistique, réflexion stratégique et développement technique pour créer des expériences digitales avec une véritable personnalité.</p>
+          </div>
           <ul className="grid gap-6 sm:grid-cols-3 md:col-span-7 md:gap-8">
             {PRINCIPLES.map(([t, d], i) => (
               <li key={t} className="border-t-2 border-void pt-4">
-                <span className="label text-void/50">{String(i + 1).padStart(2, '0')}</span>
+                <span className="label text-void/70">{String(i + 1).padStart(2, '0')}</span>
                 <p className="display mt-2 text-[1.9rem]">{t}</p>
                 <p className="mt-2 text-sm leading-relaxed text-void/70">{d}</p>
               </li>
